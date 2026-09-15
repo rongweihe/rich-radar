@@ -1,0 +1,62 @@
+{
+  "site_name": "RICH Crypto * Stock 带血筹码雷达",
+  "owner": "rich",
+  "github_user": "rongweihe",
+  "repo": "rich-radar",
+  "timezone_display": "Asia/Shanghai",
+  "risk_profile": {
+    "name": "稳健：只碰龙头",
+    "max_single_position_pct": 5,
+    "max_crypto_total_pct": 20,
+    "max_single_tranche_pct": 1.5,
+    "note": "单资产上限 5%，加密总仓位上限 20%，单次分批不超过 1.5%。以上为默认值，可在此文件修改。"
+  },
+  "tiers": {
+    "core": {
+      "label": "龙头 · 可进入研究买入",
+      "desc": "恐慌分数 ≥60 且通过基本面核查后，可进入分批研究买入；仍受风险预算约束。",
+      "assets": ["BTC_USDT", "ETH_USDT", "NVDA", "GOOGL", "AAPL", "MSFT", "AMZN", "META"]
+    },
+    "watch": {
+      "label": "观察 · 不作买入候选",
+      "desc": "波动大或链上/平台风险高；只做观察提醒，不进入买入流程。",
+      "assets": ["SOL_USDT", "BNB_USDT", "LINK_USDT", "AAVE_USDT", "TSLA"]
+    },
+    "frontier": {
+      "label": "前沿 · 历史不足一年",
+      "desc": "上市/上线时间短，历史分位与回撤统计不可靠，仅记录。",
+      "assets": ["HYPE_USDT", "CRCL", "NBIS"]
+    }
+  },
+  "sectors": {
+    "crypto_l1": {"label": "加密 L1 / 平台币", "assets": ["BTC_USDT", "ETH_USDT", "SOL_USDT", "BNB_USDT"]},
+    "crypto_defi": {"label": "加密 DeFi / 基础设施", "assets": ["LINK_USDT", "AAVE_USDT", "HYPE_USDT"]},
+    "stablecoin_fintech": {"label": "稳定币 / 加密金融股", "assets": ["CRCL"]},
+    "megacap_tech": {"label": "美股大型科技", "assets": ["NVDA", "GOOGL", "AAPL", "MSFT", "AMZN", "META"]},
+    "high_beta": {"label": "美股高贝塔成长", "assets": ["TSLA", "NBIS"]}
+  },
+  "sources": {
+    "crypto": {"name": "Gate.io 公开现货 K 线 (1d)", "url": "https://api.gateio.ws/api/v4/spot/candlesticks", "cors": true, "history": "约 400 日"},
+    "stocks": {"name": "Yahoo Finance chart API (1d)", "url": "https://query1.finance.yahoo.com/v8/finance/chart/", "cors": false, "history": "1 年 (~251 交易日)"},
+    "sentiment_crypto": {"name": "Alternative.me Crypto Fear & Greed", "url": "https://api.alternative.me/fng/", "cors": true, "history": "400 日"},
+    "sentiment_stocks": {"name": "CBOE VIX (via Yahoo ^VIX)", "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX", "cors": false, "history": "1 年"},
+    "rejected": [{"name": "Stooq", "reason": "2026-09-15 测试返回 Access denied"}]
+  },
+  "scoring": {
+    "version": "v1 (2026-09-15)",
+    "note": "四个分量各 0–25 分，合计 0–100。阈值未经充分历史检验，仅作观察提醒；分数只触发进一步研究，不是买入信号。",
+    "drawdown": {"start": 0.10, "full_crypto": 0.50, "full_stock": 0.35},
+    "shock": {"metric": "7 日收益在自身历史中的分位", "full_at_pctile": 0.0, "zero_at_pctile": 0.20},
+    "volume": {"metric": "近 7 日均量 / 近 90 日中位量", "start": 1.0, "full": 2.5},
+    "sentiment": {"crypto": {"full": 10, "zero": 40, "index": "Fear & Greed"}, "stock": {"zero": 15, "full": 35, "index": "VIX"}},
+    "research_trigger": 60,
+    "attention": 40,
+    "obs_price": "min(近 60 日最低收盘 × 0.97, 近一年最高收盘 × (1 − 40% 加密 / 25% 美股))；仅为重新评估的观察位，不是目标价。",
+    "thin_liquidity_quote_volume_usdt": 20000000
+  },
+  "watchlist": {
+    "crypto": ["BTC_USDT", "ETH_USDT", "SOL_USDT", "BNB_USDT", "LINK_USDT", "AAVE_USDT", "HYPE_USDT"],
+    "stocks": ["CRCL", "NVDA", "GOOGL", "AAPL", "MSFT", "TSLA", "AMZN", "META", "NBIS"],
+    "bench": ["SPY", "QQQ", "^VIX"]
+  }
+}

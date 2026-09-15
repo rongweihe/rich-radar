@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RICH Crypto * Stock 带血筹码雷达</title>
+<style>
+:root{
+  --bg:#f4f5f2; --panel:#ffffff; --ink:#1a1c19; --ink2:#5c625a; --ink3:#8b917f;
+  --line:#e4e6df; --line2:#eef0ea; --dark:#14231b; --darkink:#e8ede6;
+  --green:#3f6b4c; --green-bg:#e7efe6; --amber:#8a6d2f; --amber-bg:#f6efe0;
+  --red:#9a3b34; --red-bg:#f6e6e3; --blue:#3a5a78; --accent:#4a7c59;
+  --mono:"SF Mono",ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#161814; --panel:#1e211c; --ink:#e8ede6; --ink2:#a3a99c; --ink3:#767c6d;
+  --line:#2c302a; --line2:#252822; --dark:#0f1a13; --darkink:#e8ede6;
+  --green:#8fc79b; --green-bg:#20301f; --amber:#d9b877; --amber-bg:#2f2a1c;
+  --red:#e09a92; --red-bg:#331f1c; --blue:#9bc0dd; --accent:#7fbf8e;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--blue)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+/* header */
+header{background:var(--dark);color:var(--darkink)}
+.hbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;max-width:1180px;margin:0 auto;flex-wrap:wrap;gap:8px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:600;letter-spacing:.5px}
+.logo{width:26px;height:26px;border-radius:7px;background:var(--accent);display:grid;place-items:center;color:#0f1a13;font-weight:800}
+.brand small{display:block;font-weight:400;font-size:11px;letter-spacing:2px;color:#9db3a2;text-transform:uppercase}
+.motto{font-size:12px;letter-spacing:3px;color:#9db3a2}
+/* hero */
+.hero{padding:26px 0 10px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--ink3);text-transform:uppercase}
+h1.title{font-size:30px;margin:6px 0 2px;letter-spacing:1px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.vtag{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--ink2)}
+.sub{color:var(--ink2);margin:2px 0 12px}
+.scanline{font-family:var(--mono);font-size:12px;color:var(--ink3);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:5px;box-shadow:0 0 0 3px rgba(74,124,89,.18)}
+.btn{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+/* verdict banner */
+.verdict{margin:16px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.verdict .lab{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--ink3);text-transform:uppercase}
+.verdict h2{font-size:24px;margin:8px 0 4px}
+.verdict p{color:var(--ink2);margin:4px 0 0;max-width:70ch}
+/* market strip */
+.mkt{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.mcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.mcard .k{font-family:var(--mono);font-size:11px;color:var(--ink3);letter-spacing:1px;text-transform:uppercase}
+.mcard .v{font-size:22px;font-weight:600;margin-top:4px}
+.mcard .d{font-size:12px;color:var(--ink2);margin-top:2px}
+.gauge{height:6px;border-radius:3px;background:var(--line2);margin-top:8px;overflow:hidden}
+.gauge>i{display:block;height:100%}
+/* section */
+.sec{margin:26px 0}
+.sec>.lab{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--ink3);text-transform:uppercase;margin-bottom:8px}
+.sec h3{font-size:20px;margin:0 0 4px}
+.sec .note{color:var(--ink2);font-size:13px;margin:0 0 14px}
+/* table */
+.tablecard{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.thead,.trow{display:grid;grid-template-columns:44px 1.5fr 1.1fr 1fr 1.1fr 2fr;gap:10px;align-items:center}
+.thead{padding:12px 16px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--ink3);text-transform:uppercase}
+.trow{padding:14px 16px;border-bottom:1px solid var(--line2);cursor:pointer;transition:background .12s}
+.trow:last-child{border-bottom:0}
+.trow:hover{background:var(--line2)}
+.rank{font-family:var(--mono);color:var(--ink3);font-size:13px}
+.aname{font-weight:600;font-size:15px}
+.aname small{display:block;font-weight:400;color:var(--ink3);font-size:11px;font-family:var(--mono);margin-top:1px}
+.price{font-family:var(--mono);font-weight:600}
+.price small{display:block;font-weight:400;color:var(--ink3);font-size:11px}
+.chg-pos{color:var(--green)} .chg-neg{color:var(--red)}
+.pill{display:inline-block;font-size:12px;padding:3px 9px;border-radius:999px;font-weight:600;white-space:nowrap}
+.pill.g{background:var(--green-bg);color:var(--green)}
+.pill.a{background:var(--amber-bg);color:var(--amber)}
+.pill.r{background:var(--red-bg);color:var(--red)}
+.obs{font-family:var(--mono);font-weight:600}
+.obs small{display:block;font-weight:400;color:var(--ink3);font-size:11px}
+.reason{font-size:12.5px;color:var(--ink2)}
+.spark{width:100%;height:26px;display:block}
+/* score chip */
+.score{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px}
+.sbar{width:46px;height:5px;border-radius:3px;background:var(--line2);overflow:hidden}
+.sbar>i{display:block;height:100%}
+/* drawer */
+.drawer-bg{position:fixed;inset:0;background:rgba(10,14,11,.42);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.drawer-bg.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(560px,94vw);background:var(--panel);border-left:1px solid var(--line);transform:translateX(100%);transition:transform .24s cubic-bezier(.4,0,.2,1);z-index:50;overflow-y:auto}
+.drawer.on{transform:none}
+.dhead{padding:20px 22px 12px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+.dclose{position:absolute;top:16px;right:18px;border:0;background:none;font-size:22px;color:var(--ink3);cursor:pointer;line-height:1}
+.dbody{padding:18px 22px 60px}
+.dsec{margin:18px 0}
+.dsec h4{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin:0 0 8px;border-bottom:1px solid var(--line2);padding-bottom:6px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+.kv .r{display:flex;justify-content:space-between;font-size:13px;border-bottom:1px dotted var(--line);padding-bottom:5px}
+.kv .r span:first-child{color:var(--ink2)}
+.kv .r span:last-child{font-family:var(--mono);font-weight:600}
+.rc p{margin:7px 0;font-size:13.5px}
+.rc b{color:var(--ink)}
+.callout{background:var(--red-bg);border:1px solid rgba(154,59,52,.25);border-radius:10px;padding:12px 14px;margin-top:10px}
+.callout .h{font-weight:700;color:var(--red);font-size:12px;margin-bottom:4px}
+.compbars{display:flex;flex-direction:column;gap:7px;margin-top:4px}
+.cb{display:grid;grid-template-columns:78px 1fr 40px;align-items:center;gap:8px;font-size:12px}
+.cb .track{height:8px;border-radius:4px;background:var(--line2);overflow:hidden}
+.cb .track>i{display:block;height:100%;background:var(--accent)}
+.flag{font-family:var(--mono);font-size:11px;color:var(--amber);background:var(--amber-bg);padding:1px 6px;border-radius:4px}
+/* footer / methodology */
+.method{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:24px 0}
+.method h4{margin:0 0 10px;font-size:15px}
+.method ul{margin:8px 0;padding-left:20px}
+.method li{margin:5px 0;font-size:13px;color:var(--ink2)}
+.tabs{display:flex;gap:6px;margin:8px 0 16px;flex-wrap:wrap}
+.tab{font-family:var(--mono);font-size:12px;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);cursor:pointer;color:var(--ink2)}
+.tab.on{background:var(--dark);color:var(--darkink);border-color:var(--dark)}
+footer{color:var(--ink3);font-size:12px;text-align:center;padding:30px 16px 50px;font-family:var(--mono)}
+.disc{background:var(--amber-bg);border:1px solid rgba(138,109,47,.25);border-radius:10px;padding:12px 14px;color:var(--amber);font-size:12.5px;margin:16px 0}
+@media (max-width:820px){
+  .mkt{grid-template-columns:repeat(2,1fr)}
+  .thead{display:none}
+  .trow{grid-template-columns:1fr 1fr;grid-auto-rows:auto;gap:6px 10px;padding:14px}
+  .trow .rank{grid-column:1/2}
+  .trow .reason{grid-column:1/3}
+  .trow .spark{grid-column:1/3}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hbar">
+    <div class="brand"><span class="logo">R</span><div>RICH RADAR<small>Crypto * Stock</small></div></div>
+    <div class="motto">独立判断 · 耐心等待</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="eyebrow">CRYPTO / STOCK OPPORTUNITY MONITOR</div>
+    <h1 class="title">带血筹码雷达 <span class="vtag" id="cfgVer">v1</span></h1>
+    <div class="sub">先看当前结论，再看依据和下一步观察价。恐慌分数只触发进一步研究，不是买入信号。</div>
+    <div class="scanline">
+      <span><span class="dot"></span><span id="scanTime">加载中…</span></span>
+      <span id="dataFreshness"></span>
+      <button class="btn" id="refreshBtn">↻ 刷新加密实时价</button>
+    </div>
+  </div>
+
+  <div class="verdict" id="verdict">
+    <div class="lab">TODAY'S BUY-THE-DIP RADAR</div>
+    <h2 id="verdictH">正在计算…</h2>
+    <p id="verdictP"></p>
+  </div>
+
+  <!-- MARKET LAYER -->
+  <div class="sec">
+    <div class="lab">第一层 · 市场</div>
+    <h3>市场情绪与大盘压力</h3>
+    <p class="note">加密用恐惧贪婪指数，美股用 VIX 与大盘指数。数据时间与来源见每格标注。</p>
+    <div class="mkt" id="marketStrip"></div>
+  </div>
+
+  <!-- ASSET LAYER -->
+  <div class="sec">
+    <div class="lab">第三层 · 单个资产</div>
+    <h3 id="rankHead">观察名单雷达</h3>
+    <p class="note">按恐慌分数从高到低排序，直接告诉你该等什么。点任意一行看研究卡（质量 / 估值 / 催化 / 最强反方 / 上涨空间 / 下行风险 / 等待时间 / 波动）。</p>
+    <div class="tabs" id="tabs">
+      <span class="tab on" data-f="all">全部</span>
+      <span class="tab" data-f="crypto">加密</span>
+      <span class="tab" data-f="stock">美股</span>
+      <span class="tab" data-f="core">龙头档</span>
+      <span class="tab" data-f="watch">观察档</span>
+      <span class="tab" data-f="frontier">前沿档</span>
+    </div>
+    <div class="tablecard">
+      <div class="thead">
+        <div>研究顺位</div><div>资产</div><div>参考价格</div><div>现在怎么做</div><div>下一步观察价</div><div>判断依据</div>
+      </div>
+      <div id="rows"></div>
+    </div>
+  </div>
+
+  <!-- SECTOR LAYER -->
+  <div class="sec">
+    <div class="lab">第二层 · 板块</div>
+    <h3>板块概览</h3>
+    <p class="note">同板块资产的平均恐慌分数与回撤，帮助分辨是单资产问题还是板块性压力。</p>
+    <div class="mkt" id="sectorStrip"></div>
+  </div>
+
+  <div class="disc" id="disc"></div>
+
+  <div class="method">
+    <h4>方法与口径（务必先读）</h4>
+    <ul id="methodList"></ul>
+    <div id="missingBox"></div>
+  </div>
+</div>
+
+<div class="drawer-bg" id="drawerBg"></div>
+<div class="drawer" id="drawer"><div id="drawerInner"></div></div>
+
+<footer>
+  RICH Crypto * Stock 带血筹码雷达 · 数据仅供研究，非投资建议 ·
+  <span id="footVer"></span>
+</footer>
+
+<script id="__embed" type="application/json">{"config":{"site_name":"RICH Crypto * Stock 带血筹码雷达","owner":"rich","github_user":"rongweihe","repo":"rich-radar","timezone_display":"Asia/Shanghai","risk_profile":{"name":"稳健：只碰龙头","max_single_position_pct":5,"max_crypto_total_pct":20,"max_single_tranche_pct":1.5,"note":"单资产上限 5%，加密总仓位上限 20%，单次分批不超过 1.5%。以上为默认值，可在此文件修改。"},"tiers":{"core":{"label":"龙头 · 可进入研究买入","desc":"恐慌分数 ≥60 且通过基本面核查后，可进入分批研究买入；仍受风险预算约束。","assets":["BTC_USDT","ETH_USDT","NVDA","GOOGL","AAPL","MSFT","AMZN","META"]},"watch":{"label":"观察 · 不作买入候选","desc":"波动大或链上/平台风险高；只做观察提醒，不进入买入流程。","assets":["SOL_USDT","BNB_USDT","LINK_USDT","AAVE_USDT","TSLA"]},"frontier":{"label":"前沿 · 历史不足一年","desc":"上市/上线时间短，历史分位与回撤统计不可靠，仅记录。","assets":["HYPE_USDT","CRCL","NBIS"]}},"sectors":{"crypto_l1":{"label":"加密 L1 / 平台币","assets":["BTC_USDT","ETH_USDT","SOL_USDT","BNB_USDT"]},"crypto_defi":{"label":"加密 DeFi / 基础设施","assets":["LINK_USDT","AAVE_USDT","HYPE_USDT"]},"stablecoin_fintech":{"label":"稳定币 / 加密金融股","assets":["CRCL"]},"megacap_tech":{"label":"美股大型科技","assets":["NVDA","GOOGL","AAPL","MSFT","AMZN","META"]},"high_beta":{"label":"美股高贝塔成长","assets":["TSLA","NBIS"]}},"sources":{"crypto":{"name":"Gate.io 公开现货 K 线 (1d)","url":"https://api.gateio.ws/api/v4/spot/candlesticks","cors":true,"history":"约 400 日"},"stocks":{"name":"Yahoo Finance chart API (1d)","url":"https://query1.finance.yahoo.com/v8/finance/chart/","cors":false,"history":"1 年 (~251 交易日)"},"sentiment_crypto":{"name":"Alternative.me Crypto Fear & Greed","url":"https://api.alternative.me/fng/","cors":true,"history":"400 日"},"sentiment_stocks":{"name":"CBOE VIX (via Yahoo ^VIX)","url":"https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX","cors":false,"history":"1 年"},"rejected":[{"name":"Stooq","reason":"2026-09-15 测试返回 Access denied"}]},"scoring":{"version":"v1 (2026-09-15)","note":"四个分量各 0–25 分，合计 0–100。阈值未经充分历史检验，仅作观察提醒；分数只触发进一步研究，不是买入信号。","drawdown":{"start":0.1,"full_crypto":0.5,"full_stock":0.35},"shock":{"metric":"7 日收益在自身历史中的分位","full_at_pctile":0.0,"zero_at_pctile":0.2},"volume":{"metric":"近 7 日均量 / 近 90 日中位量","start":1.0,"full":2.5},"sentiment":{"crypto":{"full":10,"zero":40,"index":"Fear & Greed"},"stock":{"zero":15,"full":35,"index":"VIX"}},"research_trigger":60,"attention":40,"obs_price":"min(近 60 日最低收盘 × 0.97, 近一年最高收盘 × (1 − 40% 加密 / 25% 美股))；仅为重新评估的观察位，不是目标价。","thin_liquidity_quote_volume_usdt":20000000},"watchlist":{"crypto":["BTC_USDT","ETH_USDT","SOL_USDT","BNB_USDT","LINK_USDT","AAVE_USDT","HYPE_USDT"],"stocks":["CRCL","NVDA","GOOGL","AAPL","MSFT","TSLA","AMZN","META","NBIS"],"bench":["SPY","QQQ","^VIX"]}},"data":{"fetched_at":"2026-09-15T05:17:58.897Z","generator":"browser-js v1 (mirror of scripts/compute.py)","assets":{"BTC_USDT":{"price":77319.2,"last_bar":"2026-09-14","bars":399,"first_bar":"2025-08-12","ret_1d":0.6,"ret_7d":-2.3,"ret_30d":22.6,"ret_90d":17.7,"ret_1d_prevbar":1.8,"high_1y":124659,"high_1y_date":"2025-10-06","low_1y":58632.4,"low_1y_date":"2026-06-30","dd_from_high":-38,"up_from_low":31.9,"range_pos":28.3,"low_60":62821.3,"ma50":71448.8,"ma200":70223.4,"vs_ma200":10.1,"rsi14":54.1,"rvol30":47.4,"mdd_1y":-53,"r7_pctile":36.5,"vol_ratio":0.909,"sentiment":57,"score":17,"comps":{"drawdown":17.5,"shock":0,"volume":0,"sentiment":0},"obs_price":60936.7,"obs_gap":-21.2,"backtest":{"days":309,"days_ge60":24,"days_ge40":115,"score_max":97,"triggers":4,"fwd30":{"n":4,"median":-0.0289,"min":-0.112,"max":0.105}},"spark":[77003,76832,77546,77619,75546,76749,77063,77328,75929,74453,73627,73469,73885,73684,71406,66756,64144,63884,61052,60889,63331,63082,61721,61511,63619,63577,64455,65743,66326,65672,64506,62957,63542,64297,63310,64023,62730,61078,59796,60099,60027,59576,60266,58632,60027,61561,62585,63141,63647,64040,63362,62290,63222,64165,63822,63781,62337,65034,64754,63832,63935,64838,64727,65256,66558,66114,65099,64146,64374,65399,63760,63924,63982,64784,62888,62821,63566,63523,64107,64657,64328,64919,64958,64898,63974,63598,63481,63483,63040,63084,62898,64536,64727,69343,73022,78336,77078,77727,78985,78523,79027,80253,77845,78231,77683,78586,77437,77336,81263,79657,79836,80341,79107,78456,78309,76576,77228,77283,76832,78202],"kind":"crypto","source":"Gate.io spot 1d candlesticks (quote volume USDT)","live_bar":"2026-09-15"},"ETH_USDT":{"price":2479.91,"last_bar":"2026-09-14","bars":399,"first_bar":"2025-08-12","ret_1d":0.1,"ret_7d":-0.4,"ret_30d":31.7,"ret_90d":38.3,"ret_1d_prevbar":1.6,"high_1y":4683.46,"high_1y_date":"2025-10-06","low_1y":1567.64,"low_1y_date":"2026-06-25","dd_from_high":-47,"up_from_low":58.2,"range_pos":29.3,"low_60":1841.82,"ma50":2198.25,"ma200":2061.26,"vs_ma200":20.3,"rsi14":57.4,"rvol30":71.3,"mdd_1y":-66.5,"r7_pctile":50.5,"vol_ratio":1.53,"sentiment":57,"score":32,"comps":{"drawdown":23.2,"shock":0,"volume":8.91,"sentiment":0},"obs_price":1786.57,"obs_gap":-28,"backtest":{"days":309,"days_ge60":17,"days_ge40":136,"score_max":96,"triggers":2,"fwd30":{"n":2,"median":-0.102,"min":-0.173,"max":-0.0304}},"spark":[2129.7,2111.9,2129.4,2133.8,2065.9,2117.4,2099.8,2113.1,2073.8,2024.9,2010,2014.5,2022.4,2007,2006.6,1860,1813.1,1770.8,1583.3,1569.7,1690.3,1690.3,1639.5,1621.6,1673.5,1666.4,1681.1,1725.7,1796.1,1792.9,1750.6,1711.2,1711.1,1740.8,1707.1,1728.2,1667.2,1622.2,1567.6,1578.7,1574,1572.1,1613.1,1572,1609.5,1700.4,1758,1780.6,1785.9,1799.4,1771.8,1743.6,1745.3,1797,1788,1806.8,1776.7,1891.6,1917.8,1864.7,1841.8,1862.7,1872.2,1904.7,1930.1,1934.2,1878.4,1861.7,1874.9,1954.8,1892.4,1921.8,1910.7,1918.6,1862.6,1845.2,1885.2,1860.3,1869.8,1908.8,1904.2,1914.3,1917,1910.8,1873.3,1882.7,1879.9,1886.4,1882.1,1882.8,1876.2,1913.8,1917.7,2253.2,2326.8,2516.1,2422.6,2463.4,2482,2442.6,2506.8,2510.7,2442.8,2457.5,2417.1,2467.6,2418.8,2392.3,2507.5,2455.9,2480.3,2514.7,2490.2,2485.1,2468.3,2438,2516.7,2526.1,2477.2,2515.9],"kind":"crypto","source":"Gate.io spot 1d candlesticks (quote volume USDT)","live_bar":"2026-09-15"},"SOL_USDT":{"price":100.62,"last_bar":"2026-09-14","bars":399,"first_bar":"2025-08-12","ret_1d":1.3,"ret_7d":-3.1,"ret_30d":33.5,"ret_90d":36.8,"ret_1d_prevbar":3.3,"high_1y":247.48,"high_1y_date":"2025-09-18","low_1y":62.19,"low_1y_date":"2026-06-06","dd_from_high":-59.3,"up_from_low":61.8,"range_pos":20.7,"low_60":71.95,"ma50":88.4858,"ma200":83.2166,"vs_ma200":20.9,"rsi14":54.1,"rvol30":66.8,"mdd_1y":-74.9,"r7_pctile":36.5,"vol_ratio":1.39,"sentiment":57,"score":31,"comps":{"drawdown":25,"shock":0,"volume":6.46,"sentiment":0},"obs_price":69.7915,"obs_gap":-30.6,"backtest":{"days":309,"days_ge60":23,"days_ge40":164,"score_max":96,"triggers":4,"fwd30":{"n":4,"median":-0.0305,"min":-0.179,"max":0.15}},"spark":[85.39,84.3,86.16,87.35,84.41,85.76,85.27,85.05,83.73,82.44,82.12,82.03,82.75,82.45,81.28,74.23,71.62,68.86,63.63,62.19,66.49,66.83,64.97,63.19,66.91,66.83,68.93,71.29,73.98,73.54,72.05,69.71,69.74,73.21,72.46,71.96,69.68,68.11,67.7,71.89,70.5,71.39,75.16,73.67,77.46,80.72,82.34,81.81,81.6,81.95,80.57,77.83,78.03,78.13,76.78,76.9,75,77.86,77.27,75.33,75.03,75.53,76.37,77.85,78.13,77.98,75.87,73.97,74.52,76.78,74.22,73.83,73.69,74.5,72.88,71.95,73.64,73.56,73.75,74.03,72.69,73.67,76.02,76.28,76,76.3,75.62,76.27,75.41,75.35,74.62,76.01,77.07,85.37,87.66,93.73,93.86,95.43,98.98,96.6,102.06,109.14,104.13,105.62,101.78,103.05,99.99,100.43,103.95,101.91,103.17,106.55,103.8,103.36,101.61,98.68,102.46,101.77,99.3,102.54],"kind":"crypto","source":"Gate.io spot 1d candlesticks (quote volume USDT)","live_bar":"2026-09-15"},"BNB_USDT":{"price":718.6,"last_bar":"2026-09-14","bars":399,"first_bar":"2025-08-12","ret_1d":0.3,"ret_7d":-2.9,"ret_30d":18.2,"ret_90d":18.8,"ret_1d_prevbar":0.6,"high_1y":1307.1,"high_1y_date":"2025-10-08","low_1y":546.6,"low_1y_date":"2026-06-30","dd_from_high":-45,"up_from_low":31.5,"range_pos":22.6,"low_60":564.8,"ma50":655.582,"ma200":625.907,"vs_ma200":14.8,"rsi14":55.6,"rvol30":46.3,"mdd_1y":-58.2,"r7_pctile":28.3,"vol_ratio":1.81,"sentiment":57,"score":35,"comps":{"drawdown":21.9,"shock":0,"volume":13.5,"sentiment":0},"obs_price":547.856,"obs_gap":-23.8,"backtest":{"days":309,"days_ge60":24,"days_ge40":148,"score_max":97,"triggers":4,"fwd30":{"n":4,"median":-0.0909,"min":-0.165,"max":0.00862}},"spark":[643.5,639.9,649.3,658.5,650.4,656.3,656.5,663.1,656.4,648.8,638.2,643.2,718.5,710.4,693,650.6,620.6,604.4,572.3,574.6,604.5,601.9,593.4,586.6,605.6,603.7,609.5,616.7,617.9,605,601.6,578.6,581.4,588,584.3,590.2,578.1,564.6,560.6,567.6,557.3,551.1,559.5,546.6,550.4,558.9,573.9,575.3,589.8,586.1,576.9,568.7,568.7,575.5,574.7,573.9,567.6,581.9,580.7,572.5,568.1,570.6,570.9,571.4,574,571,567.2,564.8,568.9,575.4,566.4,571.2,572,592.1,587,575.2,588.4,589.3,593.1,593.8,592.3,592.6,600.7,602.4,599.1,616.7,610.5,610.7,607.9,607.8,603,605.8,603.9,627.6,654.8,687,695.3,702.3,704.2,694.3,707.6,711.9,691.3,692.7,684.7,691.5,683,688.7,725,721.3,766.5,753,739.9,752.1,722.6,708.7,726.7,727.6,716.4,720.5],"kind":"crypto","source":"Gate.io spot 1d candlesticks (quote volume USDT)","live_bar":"2026-09-15"},"LINK_USDT":{"price":11.396,"last_bar":"2026-09-14","bars":399,"first_bar":"2025-08-12","ret_1d":1.7,"ret_7d":-10.6,"ret_30d":20.3,"ret_90d":37.7,"ret_1d_prevbar":2.8,"high_1y":24.632,"high_1y_date":"2025-09-18","low_1y":7.202,"low_1y_date":"2026-06-30","dd_from_high":-53.7,"up_from_low":58.2,"range_pos":24.1,"low_60":8.064,"ma50":10.2166,"ma200":9.14161,"vs_ma200":24.7,"rsi14":51.3,"rvol30":80.1,"mdd_1y":-70.8,"r7_pctile":11.7,"vol_ratio":13.1,"sentiment":57,"score":60,"comps":{"drawdown":25,"shock":10.3,"volume":25,"sentiment":0},"obs_price":7.82208,"obs_gap":-31.4,"backtest":{"days":309,"days_ge60":22,"days_ge40":194,"score_max":95,"triggers":4,"fwd30":{"n":4,"median":-0.03,"min":-0.104,"max":0.0336}},"spark":[9.609,9.451,9.635,9.757,9.419,9.561,9.428,9.503,9.386,9.136,9.004,9.021,9.191,9.15,9.056,8.373,8.335,8.017,7.364,7.395,7.917,7.998,7.84,7.562,7.889,7.867,7.982,8.182,8.3,8.276,8.092,8.015,7.949,7.988,7.784,7.876,7.635,7.425,7.248,7.353,7.298,7.27,7.382,7.202,7.359,7.748,7.975,8.008,8.062,8.018,7.857,7.639,7.736,7.967,7.916,8.006,7.887,8.345,8.541,8.343,8.254,8.347,8.385,8.589,8.655,8.63,8.472,8.34,8.379,8.826,8.38,8.446,8.331,8.461,8.166,8.064,8.383,8.178,8.144,8.162,8.196,8.189,8.31,8.184,8.299,8.778,8.675,8.889,8.97,9.471,9.391,9.544,9.54,10.553,10.692,11.993,11.648,11.543,11.631,11.288,11.624,11.918,11.433,11.46,11.144,11.325,11.234,11.118,11.836,11.633,12.052,13.244,12.747,12.517,11.806,11.454,11.551,11.508,11.203,11.522],"kind":"crypto","source":"Gate.io spot 1d candlesticks (quote volume USDT)","live_bar":"2026-09-15","flags":["thin_liquidity"]},"AAVE_USDT":{"price":127.15,"last_bar":"2026-09-14","bars":399,"first_bar":"2025-08-12","ret_1d":2.2,"ret_7d":-3.8,"ret_30d":47.5,"ret_90d":67.5,"ret_1d_prevbar":3.1,"high_1y":309.14,"high_1y_date":"2025-09-18","low_1y":60.97,"low_1y_date":"2026-06-06","dd_from_high":-58.9,"up_from_low":108.5,"range_pos":26.7,"low_60":86,"ma50":109.784,"ma200":97.2418,"vs_ma200":30.8,"rsi14":55.5,"rvol30":104.5,"mdd_1y":-80.3,"r7_pctile":43.1,"vol_ratio":1.09,"sentiment":57,"score":27,"comps":{"drawdown":25,"shock":0,"volume":1.54,"sentiment":0},"obs_price":83.42,"obs_gap":-34.4,"backtest":{"days":309,"days_ge60":40,"days_ge40":197,"score_max":98,"triggers":12,"fwd30":{"n":12,"median":0.0215,"min":-0.149,"max":0.43}},"spark":[89.46,87.4,88.1,88.16,86.13,86.7,85.72,86.38,85.75,83.32,80.81,82.51,82.79,82.14,80.25,73.65,74.43,71.32,62.27,60.97,63.71,63.46,62.11,61.3,64.36,64.19,67.06,68.35,73.74,75.93,73.92,74.83,73.62,76.04,74,75.07,72.51,80.43,82.35,95.19,94.04,91.71,91.51,85.2,83.25,86.22,87.66,88.64,89.07,94.28,89.94,88.29,91.3,95.78,98.12,96.92,94.54,98.91,95.73,91.2,90.01,89.97,89.58,89.86,95.69,97.41,94.99,93.17,92,101.47,98.01,100.86,96.07,99.52,93.75,90.66,92.18,92.4,90.48,89.81,89.77,89.9,91.22,90.62,89.34,88.3,88.02,87.94,86.53,86.19,86,89.26,87.54,95.37,99.2,122.74,126.5,141.5,132.33,126.5,127,128.05,122.17,126.73,122.45,124.1,127.88,127.17,132.76,130.35,134.44,136.87,132.17,128.79,125.8,120.64,125.11,125.6,124.37,128.25],"kind":"crypto","source":"Gate.io spot 1d candlesticks (quote volume USDT)","live_bar":"2026-09-15"},"HYPE_USDT":{"price":78.88,"last_bar":"2026-09-14","bars":399,"first_bar":"2025-08-12","ret_1d":2,"ret_7d":-7.4,"ret_30d":38.6,"ret_90d":7.2,"ret_1d_prevbar":3.9,"high_1y":87.96,"high_1y_date":"2026-09-06","low_1y":20.985,"low_1y_date":"2026-01-20","dd_from_high":-10.3,"up_from_low":275.9,"range_pos":86.4,"low_60":52.2,"ma50":69.389,"ma200":55.1769,"vs_ma200":43,"rsi14":50.8,"rvol30":87.7,"mdd_1y":-64.2,"r7_pctile":25,"vol_ratio":1.42,"sentiment":57,"score":7,"comps":{"drawdown":0.202,"shock":0,"volume":7.01,"sentiment":0},"obs_price":50.634,"obs_gap":-35.8,"backtest":{"days":309,"days_ge60":22,"days_ge40":108,"score_max":86,"triggers":5,"fwd30":{"n":5,"median":0.133,"min":-0.171,"max":0.529}},"spark":[47.767,48.091,54.886,58.587,54.598,58.73,62.822,61.16,59.584,57.762,61.573,64.498,68.306,72.106,73.635,69.84,74.564,64.451,59.786,56.532,59.741,63.811,57.809,53.31,58.971,59.328,60.686,63.923,66.902,73.599,71.16,68.333,70.324,70.765,66.979,66.308,62.196,63.958,64.11,64.372,61.702,61.494,66.917,65.054,62.43,66.948,70.678,69.87,71.346,70.609,69.188,67.637,67.102,67.514,66.8,67.332,63.467,65.564,66.854,60.756,59.752,60.238,61.136,62.487,60.888,59.377,57.515,57.45,58.14,59.64,56.11,55.2,53.95,55.87,52.56,52.2,52.61,54.01,55.06,56.96,56.22,54.11,55.12,53.88,55.1,54.5,56.08,57.51,56.51,56.91,57.16,59.46,58.53,69.68,73.67,75.55,79.33,82.28,78.93,79.65,82.29,84.65,80.92,83.4,80.03,84.2,82.8,81.94,87.43,84.42,85.4,87.96,85.17,85.17,83.57,78.6,79.45,79.67,77.31,80.36],"kind":"crypto","source":"Gate.io spot 1d candlesticks (quote volume USDT)","live_bar":"2026-09-15"},"CRCL":{"price":97.42,"last_bar":"2026-09-14","bars":251,"first_bar":"2025-09-15","ret_1d":7.5,"ret_7d":9.9,"ret_30d":55.6,"ret_90d":-14.7,"ret_1d_prevbar":7.5,"high_1y":150.48,"high_1y_date":"2025-10-09","low_1y":50.23,"low_1y_date":"2026-02-05","dd_from_high":-35.3,"up_from_low":93.9,"range_pos":47.1,"low_60":60.35,"ma50":75.056,"ma200":85.6556,"vs_ma200":13.7,"rsi14":60.3,"rvol30":86.1,"mdd_1y":-66.6,"r7_pctile":74.6,"vol_ratio":1.07,"sentiment":17.1,"score":29,"comps":{"drawdown":25,"shock":0,"volume":1.19,"sentiment":2.63},"obs_price":58.5395,"obs_gap":-39.9,"backtest":{"days":161,"days_ge60":8,"days_ge40":28,"score_max":78,"triggers":4,"fwd30":{"n":4,"median":0.108,"min":0.0437,"max":1.51}},"spark":[101.17,103.86,98.27,93.66,89.91,95.41,90.74,90.26,92.15,94.12,94.44,85.1,88.04,98.68,105.49,105.52,107.46,105.91,106.36,96.02,104.36,100.01,99.66,95.44,94.35,95.56,90.88,99.7,119.53,114.19,121.8,113.25,113.67,131.76,123.65,126.57,123.88,114,111.39,111.03,111.62,114.88,113.12,104.17,102.64,108.24,113,104.97,100.85,90.13,90.54,80.28,82.53,81.1,78.93,82.63,77.84,83.37,79.72,80.59,80.23,79.95,75.68,70.98,68.81,73.57,75.96,62.63,61.95,64.62,68.65,65.15,64.07,63.01,66.14,63,63.22,65.69,60.64,60.46,65.45,71.08,66.16,62.18,62.36,65.67,64.32,61.36,64.24,62.61,60.35,63.25,63.28,63.28,66.67,67.05,71.16,71.28,75.38,71.6,74.59,71.73,78.59,83.66,87.98,87.72,92.02,89.91,94.24,87.14,95.55,89.48,88.64,103.23,102.05,96.18,92.99,90.32,90.6,97.42],"kind":"stock","name":"Circle Internet Group","source":"Yahoo Finance chart API 1d (share volume)","market_time":"2026-09-14T20:00:03.000Z"},"NVDA":{"price":210.96,"last_bar":"2026-09-14","bars":251,"first_bar":"2025-09-15","ret_1d":-3.4,"ret_7d":-6,"ret_30d":5.1,"ret_90d":7.4,"ret_1d_prevbar":-3.4,"high_1y":235.74,"high_1y_date":"2026-05-14","low_1y":165.17,"low_1y_date":"2026-03-30","dd_from_high":-10.5,"up_from_low":27.7,"range_pos":64.9,"low_60":190.01,"ma50":212.907,"ma200":197.615,"vs_ma200":6.8,"rsi14":43.9,"rvol30":42.2,"mdd_1y":-20.2,"r7_pctile":9.4,"vol_ratio":0.824,"sentiment":17.1,"score":16,"comps":{"drawdown":0.512,"shock":13.2,"volume":0,"sentiment":2.63},"obs_price":176.805,"obs_gap":-16.2,"backtest":{"days":161,"days_ge60":0,"days_ge40":4,"score_max":50,"triggers":0,"fwd30":null},"spark":[175.2,178.68,171.24,167.52,165.17,174.4,175.75,177.39,177.64,178.1,182.08,183.91,188.63,189.31,196.51,198.87,198.35,201.68,202.06,199.88,202.5,199.64,208.27,216.61,213.17,209.25,199.57,198.45,198.48,196.5,207.83,211.5,215.2,219.44,220.78,225.83,235.74,225.32,222.32,220.61,223.47,219.51,215.33,214.86,212.6,214.25,211.14,224.36,222.82,214.75,218.66,205.1,208.64,208.19,200.42,204.87,205.19,212.45,207.41,204.65,210.69,208.65,200.04,199,195.74,192.53,194.97,200.09,197.58,194.83,195.55,196.93,204.12,202.78,210.96,203.53,211.8,212.5,207.4,202.81,203.28,207.29,212.06,208.76,206.84,196.51,197.01,190.01,195.04,200.75,206.64,211.94,219.22,218.99,223.96,217.55,217.5,224.09,225.3,225.16,225.01,219.74,217.56,216.85,214.72,208.48,213.05,209.66,227.98,217.55,220.78,217.44,224.41,228.45,230.36,225.73,223.67,218.36,218.29,210.96],"kind":"stock","name":"NVIDIA Corporation","source":"Yahoo Finance chart API 1d (share volume)","market_time":"2026-09-14T20:00:00.000Z"},"GOOGL":{"price":349.39,"last_bar":"2026-09-14","bars":251,"first_bar":"2025-09-15","ret_1d":3.2,"ret_7d":3.6,"ret_30d":-1.9,"ret_90d":-10.1,"ret_1d_prevbar":3.2,"high_1y":402.62,"high_1y_date":"2026-05-13","low_1y":236.57,"low_1y_date":"2025-10-10","dd_from_high":-13.2,"up_from_low":47.7,"range_pos":67.9,"low_60":317.69,"ma50":346.969,"ma200":336.965,"vs_ma200":3.7,"rsi14":55.2,"rvol30":29.3,"mdd_1y":-21.1,"r7_pctile":74.2,"vol_ratio":0.982,"sentiment":17.1,"score":6,"comps":{"drawdown":3.22,"shock":0,"volume":0,"sentiment":2.63},"obs_price":301.965,"obs_gap":-13.6,"backtest":{"days":161,"days_ge60":0,"days_ge40":7,"score_max":56,"triggers":0,"fwd30":null},"spark":[290.44,290.93,280.92,274.34,273.5,287.56,297.39,295.77,299.99,305.46,317.32,318.49,317.24,321.31,332.91,337.12,336.02,341.68,337.42,332.29,339.32,338.89,344.4,350.34,349.78,349.94,384.8,385.69,383.25,388.43,398.04,397.99,400.8,388.64,387.35,402.62,401.07,396.78,396.94,387.66,388.91,387.66,382.97,388.88,388.83,390.13,380.34,376.37,361.85,358.99,372.19,368.53,363.31,364.26,356.38,357.77,359.68,369.35,373.25,363.79,368.03,349.68,346.13,345.29,343.71,337.39,353.65,357.37,361.21,359.91,366.46,367.03,361.92,358.89,357.18,352.51,359.51,370.92,354.46,346.77,351.99,347.15,342.09,317.69,319.74,326.56,333.71,336.71,333.66,356.13,373.51,377.65,362.43,357.75,354.3,357.52,343.8,343.54,346.36,345.9,344,344.2,344.72,340.67,344.82,348.06,346.96,342,340.65,346.59,339.35,335.02,337.12,342.48,338.46,338.36,330.65,332.6,338.5,349.39],"kind":"stock","name":"Alphabet Inc.","source":"Yahoo Finance chart API 1d (share volume)","market_time":"2026-09-14T20:00:01.000Z"},"AAPL":{"price":333.08,"last_bar":"2026-09-14","bars":251,"first_bar":"2025-09-15","ret_1d":0.2,"ret_7d":2.5,"ret_30d":7.8,"ret_90d":17.2,"ret_1d_prevbar":0.2,"high_1y":340.08,"high_1y_date":"2026-07-28","low_1y":236.7,"low_1y_date":"2025-09-15","dd_from_high":-2.1,"up_from_low":40.7,"range_pos":93.2,"low_60":275.15,"ma50":318.463,"ma200":285.239,"vs_ma200":16.8,"rsi14":63.3,"rvol30":22.3,"mdd_1y":-13.8,"r7_pctile":66,"vol_ratio":1.04,"sentiment":17.1,"score":3,"comps":{"drawdown":0,"shock":0,"volume":0.632,"sentiment":2.63},"obs_price":255.06,"obs_gap":-23.4,"backtest":{"days":161,"days_ge60":0,"days_ge40":3,"score_max":43,"triggers":0,"fwd30":null},"spark":[251.64,252.62,252.89,248.8,246.63,253.79,255.63,255.92,258.86,253.5,258.9,260.49,260.48,259.2,258.83,266.43,263.4,270.23,273.05,266.17,273.17,273.43,271.06,267.61,270.71,270.17,271.35,280.14,276.83,284.18,287.51,287.44,293.32,292.68,294.8,298.87,298.21,300.23,297.84,298.97,302.25,304.99,308.82,308.33,310.85,312.51,312.06,306.31,315.2,310.26,311.23,307.34,301.54,290.55,291.58,295.63,291.13,296.42,299.24,295.95,298.01,297.01,294.3,293.08,275.15,283.78,281.74,289.36,294.38,308.63,312.66,310.66,313.39,316.22,315.32,317.31,314.86,327.5,333.26,333.74,326.59,327.74,325.89,321.66,333.02,336.91,340.08,338.19,333.43,308.91,303.42,309.38,311,312.41,313.33,308.26,304.91,302.25,305.26,305.93,305.59,310.03,316.83,311.3,309.35,310.34,309.9,313.45,314.58,319.7,316.85,325.13,324.96,328.21,319.97,316.22,315.34,326.57,332.27,333.08],"kind":"stock","name":"Apple Inc.","source":"Yahoo Finance chart API 1d (share volume)","market_time":"2026-09-14T20:00:01.000Z"},"MSFT":{"price":505.41,"last_bar":"2026-09-14","bars":251,"first_bar":"2025-09-15","ret_1d":2,"ret_7d":1.7,"ret_30d":8.8,"ret_90d":22.9,"ret_1d_prevbar":2,"high_1y":542.07,"high_1y_date":"2025-10-28","low_1y":352.83,"low_1y_date":"2026-06-25","dd_from_high":-6.8,"up_from_low":43.2,"range_pos":80.6,"low_60":352.83,"ma50":455.967,"ma200":431.415,"vs_ma200":17.2,"rsi14":61.4,"rvol30":25.8,"mdd_1y":-34.9,"r7_pctile":70.9,"vol_ratio":0.585,"sentiment":17.1,"score":3,"comps":{"drawdown":0,"shock":0,"volume":0,"sentiment":2.63},"obs_price":342.245,"obs_gap":-32.3,"backtest":{"days":161,"days_ge60":7,"days_ge40":26,"score_max":74,"triggers":2,"fwd30":{"n":2,"median":0.0435,"min":-0.0472,"max":0.134}},"spark":[372.74,371.04,365.97,356.77,358.96,370.17,369.37,373.46,372.88,372.29,374.33,373.07,370.87,384.37,393.11,411.22,420.26,422.79,418.07,424.16,432.92,415.75,424.62,424.82,429.25,424.46,407.78,414.44,413.62,411.38,413.96,420.77,415.12,412.66,407.77,405.21,409.43,421.92,423.54,417.42,421.06,419.09,418.57,416.03,412.67,426.99,450.24,460.52,441.31,427.34,428.05,416.67,411.74,403.41,397.36,390.34,390.74,399.76,393.83,378.91,379.4,367.34,373.94,365.46,352.83,372.97,368.57,373.02,384.28,390.49,386.74,388.84,383.34,384.36,385.1,390.99,384.93,395.63,401.1,393.82,402.29,397.75,390.34,381.58,381.7,389.1,393.35,390.54,451.1,464.72,487.65,492.81,487.46,499.86,499.99,506.06,503.81,492.43,496.88,495.4,480.35,481.63,484.31,481.15,483.24,487.31,491.71,496.37,505.06,513.53,507.29,501.02,496.82,510.12,499.7,493.95,491.65,492.44,495.63,505.41],"kind":"stock","name":"Microsoft Corporation","source":"Yahoo Finance chart API 1d (share volume)","market_time":"2026-09-14T20:00:01.000Z"},"TSLA":{"price":358.97,"last_bar":"2026-09-14","bars":251,"first_bar":"2025-09-15","ret_1d":-1.8,"ret_7d":0.5,"ret_30d":15.3,"ret_90d":-7.8,"ret_1d_prevbar":-1.8,"high_1y":489.88,"high_1y_date":"2025-12-16","low_1y":298.32,"low_1y_date":"2026-07-29","dd_from_high":-26.7,"up_from_low":20.3,"range_pos":31.7,"low_60":298.32,"ma50":353.809,"ma200":398.631,"vs_ma200":-9.9,"rsi14":51.5,"rvol30":45.2,"mdd_1y":-39.1,"r7_pctile":54.1,"vol_ratio":1.09,"sentiment":17.1,"score":21,"comps":{"drawdown":16.7,"shock":0,"volume":1.47,"sentiment":2.63},"obs_price":289.37,"obs_gap":-19.4,"backtest":{"days":161,"days_ge60":0,"days_ge40":13,"score_max":55,"triggers":0,"fwd30":null},"spark":[383.03,385.95,372.11,361.83,355.28,371.75,381.26,360.59,352.82,346.65,343.25,345.62,348.95,352.42,364.2,391.95,388.9,400.62,392.5,386.42,387.51,373.72,376.3,378.67,376.02,372.8,381.63,390.82,392.51,389.37,398.73,411.79,428.35,445,433.45,445.27,443.3,422.24,409.99,404.11,417.26,417.85,426.01,433.59,440.36,442.1,435.79,415.88,423.74,423.7,418.45,391,408.95,396.68,381.59,399.15,406.43,411.15,404.66,396.38,400.49,405.05,381.61,375.53,375.12,379.71,411.84,420.6,425.3,393.45,419.77,402.9,394.06,406.55,407.76,394.76,396.18,394.46,391.06,380.84,369.57,378.93,374.01,319.69,313.03,309.22,307.44,298.32,308.85,311.21,322.08,327.35,321.55,319.53,328.58,330.88,332.81,327.51,339.96,342.27,339.3,336.87,351.12,345.13,362.86,348.95,350.25,345.82,354.81,348.75,367.95,356.09,357.01,376.37,354.08,368.16,367.81,363.56,365.44,358.97],"kind":"stock","name":"Tesla, Inc.","source":"Yahoo Finance chart API 1d (share volume)","market_time":"2026-09-14T20:00:00.000Z"},"AMZN":{"price":253.54,"last_bar":"2026-09-14","bars":251,"first_bar":"2025-09-15","ret_1d":-1.3,"ret_7d":-0.6,"ret_30d":-6.6,"ret_90d":-7.3,"ret_1d_prevbar":-1.3,"high_1y":284.02,"high_1y_date":"2026-08-03","low_1y":198.79,"low_1y_date":"2026-02-13","dd_from_high":-10.7,"up_from_low":27.5,"range_pos":64.2,"low_60":226.65,"ma50":255.47,"ma200":239.934,"vs_ma200":5.7,"rsi14":45.8,"rvol30":28.2,"mdd_1y":-21.7,"r7_pctile":46.7,"vol_ratio":0.775,"sentiment":17.1,"score":3,"comps":{"drawdown":0.732,"shock":0,"volume":0,"sentiment":2.63},"obs_price":213.015,"obs_gap":-16,"backtest":{"days":161,"days_ge60":1,"days_ge40":7,"score_max":61,"triggers":1,"fwd30":{"n":1,"median":-0.0013,"min":-0.0013,"max":-0.0013}},"spark":[207.24,211.71,207.54,199.34,200.95,208.27,210.57,209.77,212.79,213.77,221.25,233.65,238.38,239.89,249.02,248.5,249.7,250.56,248.28,249.91,255.36,255.08,263.99,261.12,259.7,263.04,265.06,268.26,272.05,273.55,274.99,271.17,272.68,268.99,265.82,270.13,267.22,264.14,264.86,259.34,265.01,268.46,266.32,265.29,271.85,274,270.64,261.26,256.52,250.02,253.79,246.03,245.22,244.19,238,241.51,238.55,246.02,246,237.5,244.39,232.79,234.11,234.27,227.01,232.69,240.14,238.34,241.7,242.67,244.16,245.98,243.62,247.04,245.34,247.31,247.49,254.96,249.89,247.23,249.99,247.55,244.85,233.66,232.11,231.39,230.86,226.65,235.5,271.58,284.02,277.42,272.65,272.26,274.48,278.09,272.27,267.28,265.13,262.65,261.31,259.45,265.84,260.11,258.63,262.07,261.06,260.28,256.26,266.43,259.77,254.92,254.98,258.9,258.51,256.97,252.4,251.89,256.78,253.54],"kind":"stock","name":"Amazon.com, Inc.","source":"Yahoo Finance chart API 1d (share volume)","market_time":"2026-09-14T20:00:01.000Z"},"META":{"price":665.6,"last_bar":"2026-09-14","bars":251,"first_bar":"2025-09-15","ret_1d":2.7,"ret_7d":12.3,"ret_30d":19.6,"ret_90d":10,"ret_1d_prevbar":2.7,"high_1y":780.25,"high_1y_date":"2025-09-18","low_1y":525.72,"low_1y_date":"2026-03-27","dd_from_high":-14.7,"up_from_low":26.6,"range_pos":55,"low_60":539.03,"ma50":602.556,"ma200":623.494,"vs_ma200":6.8,"rsi14":70.8,"rvol30":36.9,"mdd_1y":-32.6,"r7_pctile":94.3,"vol_ratio":1.29,"sentiment":17.1,"score":12,"comps":{"drawdown":4.69,"shock":0,"volume":4.9,"sentiment":2.63},"obs_price":522.859,"obs_gap":-21.4,"backtest":{"days":161,"days_ge60":2,"days_ge40":20,"score_max":70,"triggers":1,"fwd30":{"n":1,"median":0.139,"min":0.139,"max":0.139}},"spark":[592.92,594.89,547.54,525.72,536.38,572.13,579.23,574.46,573.02,575.05,612.42,628.39,629.86,634.53,662.49,671.58,676.87,688.55,670.91,668.84,674.72,659.15,675.03,678.62,671.34,669.12,611.91,608.75,610.41,604.96,612.88,616.81,609.63,598.86,603,616.63,618.43,614.23,611.21,602.61,605.06,607.38,610.26,612.34,635.26,635.29,632.51,600.47,597.63,622.98,627.57,593,585.39,584.59,570.98,568.43,566.98,593.48,600.21,567.58,577.22,563.85,562.2,557.67,542.87,550.25,562.6,563.29,612.91,582.9,600.29,615.58,603.12,631.48,669.21,656.73,661.04,681.31,664.54,646.01,645.85,643.81,627.17,606.1,595.19,593.87,593.41,585.61,539.03,556.71,590.24,587.94,588.77,589.9,592.1,594.92,599.12,578.85,594.97,589.85,568.97,543.67,546.03,545.83,549.9,559.02,570.05,576.14,571.1,578.02,572.34,578.54,592.85,610.68,616.77,613.48,653.69,644.38,648.03,665.6],"kind":"stock","name":"Meta Platforms, Inc.","source":"Yahoo Finance chart API 1d (share volume)","market_time":"2026-09-14T20:00:01.000Z"},"NBIS":{"price":212.19,"last_bar":"2026-09-14","bars":251,"first_bar":"2025-09-15","ret_1d":-5.5,"ret_7d":4,"ret_30d":11.4,"ret_90d":20.6,"ret_1d_prevbar":-5.5,"high_1y":286.69,"high_1y_date":"2026-06-18","low_1y":73.87,"low_1y_date":"2026-02-05","dd_from_high":-26,"up_from_low":187.2,"range_pos":65,"low_60":148.22,"ma50":211.611,"ma200":158.307,"vs_ma200":34,"rsi14":47.2,"rvol30":124.8,"mdd_1y":-48.3,"r7_pctile":52.5,"vol_ratio":0.854,"sentiment":17.1,"score":19,"comps":{"drawdown":16,"shock":0,"volume":0,"sentiment":2.63},"obs_price":143.773,"obs_gap":-32.2,"backtest":{"days":161,"days_ge60":1,"days_ge40":12,"score_max":63,"triggers":1,"fwd30":{"n":1,"median":0.941,"min":0.941,"max":0.941}},"spark":[114.91,115.09,105.97,100.82,92.26,103.76,101.95,108.82,112.54,117.4,125,136.33,144.97,154.56,161.94,166.77,165.34,157.14,159.16,156.55,156.14,157.08,147.16,144.96,135.51,141.19,138.23,154.49,176.42,175.92,195.09,184.77,177.05,186.1,179.11,207.27,221.15,219.94,199.86,197.73,191.82,219.93,214.77,208.06,208.37,226.34,231.09,264.51,260.58,251.68,259.67,227.81,218,220.12,211.69,222.24,232.36,260.07,265.1,280.91,286.69,283.61,275.25,259.66,256.63,240.3,261.15,276.17,229.18,215.62,213.02,195.19,216.48,216.2,219.65,210.51,194.09,199.51,171.77,177.71,182.62,216.92,218.16,220.97,187.77,187.88,169.69,148.22,188.43,190.41,212.58,225.74,218.99,189.88,187.97,184.11,193.23,259.2,255.04,277.68,268.85,248.43,223.9,220.11,219.13,210.91,221.97,213.93,218.48,209.18,206.32,199.54,204.09,210.63,226.39,243.88,240.35,228.11,224.55,212.19],"kind":"stock","name":"Nebius Group N.V.","source":"Yahoo Finance chart API 1d (share volume)","market_time":"2026-09-14T20:00:00.000Z"}},"bench":{"VIX":{"price":17.1,"time":"2026-09-14","hist30":[16.5,15.81,15.15,14.9,15.46,15.28,14.55,14.63,14.25,15.19,15.84,14.89,16.01,15.13,15.85,15.45,15.21,14.51,14.43,14.92,16.34,15.2,14.32,14.53,15.3,15.72,16.46,17.84,15.84,17.1],"high_1y":31.05,"low_1y":13.47},"SPY":{"price":760.88,"last_bar":"2026-09-14","ret_1d":-0.4,"ret_7d":-0.6,"ret_30d":1.9,"dd_from_high":-2.2,"vs_ma200":6.5,"rvol30":10.3,"spark":[757.67,771.33,769.79,768.56,773.26,773.03,770.56,772.49,777.88,776.34,772.67,767.45,769.06,762.6,765.72,763.47,765.91,766.08,771.1,769.35,767.05,761.78,765.16,773.17,770.19,765.96,762.4,757.83,764.29,760.88]},"QQQ":{"price":709.18,"last_bar":"2026-09-14","ret_1d":-0.8,"ret_7d":0,"ret_30d":3.1,"dd_from_high":-5,"vs_ma200":7.3,"rvol30":16.5,"spark":[700.07,723.85,717.3,714.65,723.03,720.87,718.45,723.7,732.07,731.07,729.87,717.51,716.08,710.93,713.44,706.32,710.72,711.37,721.11,716.43,716.76,707.64,709.24,717.67,718.96,718.36,716.31,708.69,714.88,709.18]}},"fng":{"value":69,"date":"2026-09-15","hist30":[31,41,46,62,72,71,66,73,74,65,71,73,68,69,62,69,63,65,74,73,73,71,69,66,69,56,63,61,57,69]},"errors":[],"missing":["Stooq 不可用（Access denied），美股改用 Yahoo Finance","美股历史仅 1 年（251 交易日），恐慌分数回测样本 161 天","LINK_USDT 在 Gate 成交量偏薄，成交量分量可信度低","加密情绪分量按最后完整日（前一日）的 F&G 取值","无链上数据、无期权/资金费率数据、无基本面财报数据自动抓取"]},"research":{"_meta":{"reviewed":"2026-09-15","author":"rich + Claude 协作初筛","disclaimer":"定性研究卡，非投资建议。不含编造的目标价与概率；'上涨空间/下行风险' 为驱动因素的定性描述，不是价格预测。基本面随时会变，买入前请自行复核最新财报、监管与链上数据。波动性来自 data/latest.json 的 30 日已实现年化波动（真实计算）。"},"BTC_USDT":{"quality":"加密资产中流动性与网络安全性最强、机构接受度最高；无中心化发行方，供给上限固定。质量档：龙头。","valuation":"无现金流，估值靠采用度、宏观流动性与相对历史区间判断，没有可靠内在价值锚。当前较一年高点回撤明显但仍高于 200 日均线。","catalyst":"现货 ETF 资金流、宏观降息/流动性、减半后供给节奏、主权与机构配置。","bear_case":"最强反方：本质是无收益的流动性代理，一旦宏观收紧或风险偏好逆转，回撤可达 50%+（过去一年最大回撤已验证）；监管与托管尾部风险仍在。","upside":"作为加密β的核心，情绪极度恐慌时的历史反弹幅度最大、确定性相对最高。","downside":"宏观驱动的深度回撤；黑天鹅（交易所/稳定币事件）传染。","wait":"只在恐慌分数触发且价格进入观察位附近再评估；不追涨。","tier":"core"},"ETH_USDT":{"quality":"最大的智能合约平台，开发者与 TVL 领先；有质押收益与费用销毁机制。质量档：龙头。","valuation":"可用费用/质押收益做粗略框架，但仍高度依赖采用与叙事；当前深度回撤（较高点约 -47%）。","catalyst":"L2 扩容与费用、质押 ETF、稳定币与 RWA 结算需求。","bear_case":"最强反方：叙事被 L2 与竞品分流，主网费用与价值捕获被质疑；相对 BTC 长期走弱的风险。","upside":"平台采用与结算需求回升时弹性高于 BTC。","downside":"竞争性 L1/L2 分流、监管对质押的定性。","wait":"恐慌触发 + 基本面（费用、活跃度）未恶化再评估。","tier":"core"},"SOL_USDT":{"quality":"高吞吐 L1，用户与应用活跃；但历史有网络中断记录、验证者集中度较高。质量档：强但非最稳。","valuation":"增长型 L1，估值贵、波动极大，过去一年最大回撤约 -75%。","catalyst":"消费级应用、DePIN、稳定币与支付；ETF 进展。","bear_case":"最强反方：高β、抛压与解锁敏感，网络稳定性与集中度是结构性弱点；牛熊振幅极端。","upside":"风险偏好回归时反弹速度最快之一。","downside":"深度回撤、解锁、网络事件。","wait":"观察档，不作首选买入；仅在极端恐慌+基本面未坏时记录。","tier":"watch"},"BNB_USDT":{"quality":"与最大中心化交易所深度绑定的平台币，有真实使用与销毁；但强依赖单一平台与其监管处境。质量档：平台绑定风险。","valuation":"受交易所业务与监管折价影响，估值随平台风险波动。","catalyst":"链上生态、销毁、交易所业务量。","bear_case":"最强反方：单点（交易所+监管）风险最集中，一旦平台承压，价值可能快速重估。","upside":"平台业务与生态回暖时的杠杆。","downside":"监管/平台事件的重估风险。","wait":"观察档；平台与监管新闻先行核查。","tier":"watch"},"LINK_USDT":{"quality":"预言机与跨链基础设施龙头，B2B 集成广；但代币价值捕获与费用关系长期被质疑。质量档：基础设施龙头、代币经济偏弱。","valuation":"采用领先但代币现金流关联弱；当前较高点回撤约 -54%。注意：Gate 单所成交量偏薄，成交量信号可信度低。","catalyst":"CCIP 跨链、RWA/银行集成、费用回流代币的机制进展。","bear_case":"最强反方：网络使用增长未必转化为代币需求；团队持仓与解锁供给压制价格。","upside":"机构级集成落地 + 代币经济改善时的重估。","downside":"价值捕获证伪、薄流动性下的剧烈波动。","wait":"观察档；成交量信号需跨所交叉验证。","tier":"watch"},"AAVE_USDT":{"quality":"领先的去中心化借贷协议，费用与治理成熟，有真实协议收入。质量档：DeFi 蓝筹。","valuation":"可用协议费用/收入做相对框架；波动极高（过去一年最大回撤约 -80%）。","catalyst":"存贷规模、GHO 稳定币、RWA 抵押、协议收入分配。","bear_case":"最强反方：智能合约与清算风险、DeFi 系统性去杠杆时首当其冲；收入随周期大起大落。","upside":"DeFi 活跃度回升时收入与估值双升。","downside":"合约漏洞、清算螺旋、监管。","wait":"观察档；协议健康（坏账、TVL）先核查。","tier":"watch"},"HYPE_USDT":{"quality":"Hyperliquid 平台代币，永续 DEX 有真实交易量与费用回购机制；但上线时间短、赛道竞争与平台风险高。质量档：前沿、历史不足。","valuation":"历史不足一年，分位与回撤统计不可靠；当前接近一年高点（回撤仅约 -10%）——按参考图口径'不算带血筹码'。","catalyst":"平台交易量、费用转 HYPE 的回购、生态扩张。","bear_case":"最强反方：交易量依赖市场周期，解锁、平台与流动性风险仍在，不能用回购机制当买入价（与参考图一致）。","upside":"平台份额持续扩大且回购兑现时。","downside":"周期性交易量下滑、解锁抛压、平台安全事件。","wait":"前沿档，仅记录；不因接近高点而追。","tier":"frontier"},"CRCL":{"quality":"Circle（USDC 发行方），稳定币基础设施龙头之一，收入主要来自储备利息。质量档：主题龙头、利率敏感。","valuation":"上市时间短（约一年），估值波动极大（较高点回撤约 -35%，历史最大回撤约 -67%）。","catalyst":"稳定币立法、USDC 流通量、分销伙伴、利率环境。","bear_case":"最强反方：收入高度依赖利率与储备规模，降息与竞争（含发行方分成）压缩利润；估值对叙事极敏感。","upside":"稳定币监管落地 + 流通量扩张时的收入弹性。","downside":"利率下行、竞争加剧、监管反复。","wait":"前沿档；流通量与监管进展先核查。","tier":"frontier"},"NVDA":{"quality":"AI 算力事实标准，CUDA 生态壁垒深、毛利高。质量档：龙头。","valuation":"高增长高预期，估值对增速与毛利假设敏感；当前较高点回撤温和（约 -11%）。","catalyst":"数据中心资本开支、新架构出货、主权 AI、软件与网络扩张。","bear_case":"最强反方：客户集中、AI 资本开支若见顶或消化过剩产能，增速与毛利可能双降；出口管制与竞品（自研芯片）分流。","upside":"AI 资本开支持续超预期时。","downside":"资本开支周期见顶、库存、管制。","wait":"龙头档；恐慌触发（VIX 抬升 + 深回撤）再评估，勿追高。","tier":"core"},"GOOGL":{"quality":"搜索/广告现金牛 + 云 + AI（自研模型与 TPU）。质量档：龙头。","valuation":"相对大型科技估值合理，现金流稳健；当前回撤约 -13%。","catalyst":"AI 搜索货币化、云增长、成本效率、反垄断结果。","bear_case":"最强反方：AI 改变搜索入口，核心广告护城河被侵蚀；反垄断拆分/行为约束的尾部风险。","upside":"AI 与云兑现、广告韧性。","downside":"搜索被颠覆、监管、资本开支拖累利润率。","wait":"龙头档；估值+基本面双支撑，恐慌时优先观察。","tier":"core"},"AAPL":{"quality":"全球最强消费硬件+服务生态，现金流与回购强。质量档：龙头。","valuation":"估值偏高、增长温和；当前几乎在高点附近（回撤约 -2%）——非带血筹码。","catalyst":"换机周期、服务增长、AI 端侧功能、新品类。","bear_case":"最强反方：硬件增长停滞、AI 端侧落后、监管对 App Store 抽成与默认搜索协议施压；中国市场风险。","upside":"服务与 AI 端侧驱动的重估。","downside":"增长失速、监管、地缘。","wait":"龙头档；当前无恐慌信号，等回撤。","tier":"core"},"MSFT":{"quality":"云+企业软件+AI 分发（Copilot/OpenAI）三重引擎，现金流极强。质量档：龙头。","valuation":"估值偏高、增长确定性强；当前回撤温和（约 -7%）。","catalyst":"Azure AI 增长、Copilot 货币化、企业 IT 支出。","bear_case":"最强反方：AI 资本开支巨大而回报周期长，利润率承压；企业支出放缓风险。","upside":"AI 变现兑现、云再加速。","downside":"资本开支拖累、支出放缓。","wait":"龙头档；等更深回撤或恐慌触发。","tier":"core"},"TSLA":{"quality":"电动车+能源+自动驾驶/机器人叙事，波动极高、估值含大量未兑现期权价值。质量档：高β成长、执行/叙事驱动。","valuation":"估值远高于传统车企，依赖 FSD/机器人叙事；当前跌破 200 日均线，回撤约 -27%。","catalyst":"交付、FSD/Robotaxi 进展、能源业务、新车型。","bear_case":"最强反方：核心汽车业务增长与利润率承压，自动驾驶/机器人兑现时间与监管高度不确定；估值对叙事极敏感。","upside":"自动驾驶/能源兑现时的非线性重估。","downside":"交付与利润下滑、叙事证伪、关键人物风险。","wait":"观察档（高β，非首选买入）；仅在极端恐慌+基本面未坏时记录。","tier":"watch"},"AMZN":{"quality":"电商+AWS+广告，AWS 与广告为利润引擎。质量档：龙头。","valuation":"估值合理偏高，利润率改善中；当前回撤约 -11%，近 30 日走弱。","catalyst":"AWS 再加速、广告增长、零售利润率、AI 服务。","bear_case":"最强反方：AWS 增速被竞品追赶、零售利润率对宏观消费敏感；资本开支高企。","upside":"AWS+广告双引擎与利润率兑现。","downside":"云减速、消费走弱、资本开支。","wait":"龙头档；恐慌触发或更深回撤再评估。","tier":"core"},"META":{"quality":"全球最大社交广告平台，现金流强、AI 推荐提升变现。质量档：龙头。","valuation":"估值合理，广告变现强；当前回撤约 -15%，近 7 日大涨（动能偏热）。","catalyst":"AI 推荐与广告效率、Reels/商业消息、成本纪律。","bear_case":"最强反方：Reality Labs 持续巨额亏损、AI 资本开支激增侵蚀自由现金流；广告受宏观与监管（隐私）周期影响。","upside":"广告效率与 AI 变现继续兑现。","downside":"资本开支失控、广告周期、监管。","wait":"龙头档；当前动能偏热，等回撤而非追涨。","tier":"core"},"NBIS":{"quality":"Nebius（AI 云/算力基础设施），高成长、上市时间短、现金消耗与融资依赖高。质量档：前沿、历史不足。","valuation":"历史不足一年，波动极端（过去一年最大回撤约 -48%，30 日波动为全表最高之一）；估值靠增长叙事。","catalyst":"GPU 云需求、产能与合同、融资能力。","bear_case":"最强反方：资本密集、依赖持续融资与 GPU 供给，需求或产能任一波动都会剧烈重估；竞争激烈。","upside":"AI 算力需求与合同兑现时的高弹性。","downside":"融资/产能/需求任一恶化的深度回撤。","wait":"前沿档，仅记录；仓位与波动预算需从严。","tier":"frontier"}}}</script>
+<script>
+const CN={crypto:'加密',stock:'美股'};
+const NAMES={BTC_USDT:'Bitcoin',ETH_USDT:'Ethereum',SOL_USDT:'Solana',BNB_USDT:'BNB',LINK_USDT:'Chainlink',AAVE_USDT:'Aave',HYPE_USDT:'Hyperliquid'};
+let CFG=null, DATA=null, RES=null, FILTER='all';
+
+const $=s=>document.querySelector(s);
+const fmtNum=x=>x==null?'—':(Math.abs(x)>=1000?x.toLocaleString('en-US',{maximumFractionDigits:0}):(Math.abs(x)>=1?x.toFixed(2):x.toPrecision(3)));
+const sign=x=>x==null?'':(x>0?'+':'');
+const scoreClass=s=>s>=60?'r':(s>=40?'a':'g');
+
+function verdictFor(s){ if(s>=60)return['可进入研究','恐慌分数达到研究阈值，进入基本面核查与风险预算流程']; if(s>=40)return['值得关注','接近观察区，先等价格与恐慌条件进一步满足']; return['优先等价格','当前价格尚未进入抄底观察，按研究优先级排序等待']; }
+
+// spark line svg
+function spark(arr,neg){
+  if(!arr||arr.length<2)return '';
+  const w=160,h=26,mn=Math.min(...arr),mx=Math.max(...arr),rg=(mx-mn)||1;
+  const pts=arr.map((v,i)=>`${(i/(arr.length-1)*w).toFixed(1)},${(h-2-(v-mn)/rg*(h-4)).toFixed(1)}`).join(' ');
+  const col=neg?'var(--red)':'var(--green)';
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${col}" stroke-width="1.5" points="${pts}"/></svg>`;
+}
+
+function tierOf(sym){ for(const t in CFG.tiers){ if(CFG.tiers[t].assets.includes(sym))return t; } return 'watch'; }
+
+function renderMarket(){
+  const f=DATA.fng, vix=DATA.bench.VIX, spy=DATA.bench.SPY, qqq=DATA.bench.QQQ;
+  const fClass=f.value<=25?'r':(f.value>=75?'a':'g');
+  const fLabel=f.value<=25?'极度恐惧':f.value<=45?'恐惧':f.value<=55?'中性':f.value<=75?'贪婪':'极度贪婪';
+  const vClass=vix.price>=25?'r':(vix.price>=18?'a':'g');
+  const cards=[
+    {k:'加密 · 恐惧贪婪',v:f.value+' <span style="font-size:13px;color:var(--ink2)">'+fLabel+'</span>',
+     d:'越低越恐慌 · '+f.date+' · Alternative.me',g:f.value,gc:fClass},
+    {k:'美股 · VIX',v:vix.price,d:'越高越恐慌 · '+vix.time+' · CBOE(^VIX) · 1y '+vix.low_1y+'–'+vix.high_1y,
+     g:Math.min(100,vix.price/40*100),gc:vClass},
+    {k:'标普 SPY',v:spy.price,d:sign(spy.ret_30d)+spy.ret_30d+'% (30d) · 距高 '+spy.dd_from_high+'% · '+spy.last_bar,
+     g:Math.max(4,60+spy.dd_from_high*3),gc:'g',spark:spy.spark,neg:spy.ret_30d<0},
+    {k:'纳指 QQQ',v:qqq.price,d:sign(qqq.ret_30d)+qqq.ret_30d+'% (30d) · 距高 '+qqq.dd_from_high+'% · '+qqq.last_bar,
+     g:Math.max(4,60+qqq.dd_from_high*3),gc:'g',spark:qqq.spark,neg:qqq.ret_30d<0},
+  ];
+  $('#marketStrip').innerHTML=cards.map(c=>`<div class="mcard"><div class="k">${c.k}</div><div class="v">${c.v}</div><div class="d">${c.d}</div>${c.spark?spark(c.spark,c.neg):`<div class="gauge"><i style="width:${Math.min(100,c.g)}%;background:var(--${c.gc==='r'?'red':c.gc==='a'?'amber':'green'})"></i></div>`}</div>`).join('');
+}
+
+function renderSectors(){
+  const secs=CFG.sectors;
+  const html=Object.keys(secs).map(key=>{
+    const s=secs[key], syms=s.assets.filter(x=>DATA.assets[x]);
+    if(!syms.length)return '';
+    const avgScore=Math.round(syms.reduce((a,x)=>a+DATA.assets[x].score,0)/syms.length);
+    const avgDD=(syms.reduce((a,x)=>a+DATA.assets[x].dd_from_high,0)/syms.length).toFixed(0);
+    const cl=scoreClass(avgScore);
+    return `<div class="mcard"><div class="k">${s.label}</div><div class="v">${avgScore}<span style="font-size:12px;color:var(--ink3)"> 均分</span></div><div class="d">均回撤 ${avgDD}% · ${syms.length} 个资产</div><div class="gauge"><i style="width:${avgScore}%;background:var(--${cl==='r'?'red':cl==='a'?'amber':'green'})"></i></div></div>`;
+  }).join('');
+  $('#sectorStrip').innerHTML=html;
+}
+
+function passFilter(sym,a){
+  if(FILTER==='all')return true;
+  if(FILTER==='crypto'||FILTER==='stock')return a.kind===FILTER;
+  return tierOf(sym)===FILTER;
+}
+
+function renderRows(){
+  const arr=Object.keys(DATA.assets).map(sym=>({sym,a:DATA.assets[sym]}))
+    .filter(o=>passFilter(o.sym,o.a))
+    .sort((x,y)=>y.a.score-x.a.score);
+  $('#rows').innerHTML=arr.map((o,idx)=>{
+    const {sym,a}=o; const [act]=verdictFor(a.score); const vc=scoreClass(a.score);
+    const disp=sym.replace('_USDT','');
+    const chg=a.ret_1d;
+    const reason=reasonText(sym,a);
+    const flag=a.flags&&a.flags.includes('thin_liquidity')?' <span class="flag">薄流动性</span>':'';
+    return `<div class="trow" data-sym="${sym}">
+      <div class="rank">${String(idx+1).padStart(2,'0')}</div>
+      <div><div class="aname">${disp}${flag}<small>${a.kind==='stock'?(a.name||''):(NAMES[sym]||'')} · ${CN[a.kind]}</small></div>
+        <div class="score"><span class="sbar"><i style="width:${a.score}%;background:var(--${vc==='r'?'red':vc==='a'?'amber':'green'})"></i></span>恐慌 ${a.score}</div></div>
+      <div class="price">${fmtNum(a.price)}<small class="${chg>=0?'chg-pos':'chg-neg'}">${sign(chg)}${chg}% · ${a.last_bar}</small></div>
+      <div><span class="pill ${vc}">${act}</span></div>
+      <div class="obs">${fmtNum(a.obs_price)}<small>相对现价 ${a.obs_gap}%</small></div>
+      <div class="reason">${reason}${spark(a.spark, a.ret_30d<0)}</div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.trow').forEach(r=>r.onclick=()=>openDrawer(r.dataset.sym));
+}
+
+function reasonText(sym,a){
+  const bits=[];
+  bits.push(`较一年高点 ${a.dd_from_high}%`);
+  bits.push(`30 日 ${sign(a.ret_30d)}${a.ret_30d}%`);
+  if(a.score>=60)bits.push('价格与恐慌条件已满足，待基本面核查');
+  else if(a.dd_from_high>-8)bits.push('距高点不远，当前不算带血筹码');
+  else if(a.ret_30d>15)bits.push('近一个月已明显反弹，抄底时机不充分');
+  else bits.push('尚未进入抄底观察');
+  return bits.join(' · ');
+}
+
+function compBars(a){
+  const items=[['回撤',a.comps.drawdown],['价格冲击',a.comps.shock],['成交量',a.comps.volume],['情绪',a.comps.sentiment]];
+  return `<div class="compbars">${items.map(([n,v])=>`<div class="cb"><span>${n}</span><span class="track"><i style="width:${(v/25*100).toFixed(0)}%"></i></span><span style="text-align:right;font-family:var(--mono)">${v}</span></div>`).join('')}</div>`;
+}
+
+function openDrawer(sym){
+  const a=DATA.assets[sym], r=RES[sym]||{}; const disp=sym.replace('_USDT','');
+  const vc=scoreClass(a.score); const [act,actDesc]=verdictFor(a.score);
+  const bt=a.backtest, fwd=bt.fwd30;
+  const fwdTxt=fwd?`历史 ${bt.triggers} 次触发(分数≥60)，其中 ${fwd.n} 次有 30 日后数据：中位 ${(fwd.median*100).toFixed(1)}%，区间 ${(fwd.min*100).toFixed(1)}% ~ ${(fwd.max*100).toFixed(1)}%`:`历史触发 ${bt.triggers} 次，样本不足以给出前瞻分布`;
+  const tierLabel=CFG.tiers[tierOf(sym)].label;
+  $('#drawerInner').innerHTML=`
+  <div class="dhead">
+    <button class="dclose" onclick="closeDrawer()">×</button>
+    <div class="lab" style="font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--ink3)">${disp} 研究卡 · ${tierLabel}</div>
+    <h2 style="margin:8px 0 2px;font-size:26px">${disp} <span style="font-size:15px;color:var(--ink2);font-weight:400">${a.kind==='stock'?(a.name||''):(NAMES[sym]||'')}</span></h2>
+    <div style="font-family:var(--mono);font-size:22px;font-weight:600">${fmtNum(a.price)} <span style="font-size:13px" class="${a.ret_1d>=0?'chg-pos':'chg-neg'}">${sign(a.ret_1d)}${a.ret_1d}% / 1d</span></div>
+    <div style="margin-top:8px"><span class="pill ${vc}">${act}</span> <span style="font-size:12px;color:var(--ink2)">恐慌分数 ${a.score} / 100</span></div>
+    <div style="font-size:12px;color:var(--ink2);margin-top:6px">${actDesc}。下一步观察价 <b style="font-family:var(--mono)">${fmtNum(a.obs_price)}</b>（相对现价 ${a.obs_gap}%）。</div>
+  </div>
+  <div class="dbody">
+    <div class="dsec"><h4>第一关 · 价格压力（恐慌分数拆解）</h4>${compBars(a)}
+      <div style="font-size:11.5px;color:var(--ink3);margin-top:8px">四个分量各 0–25：回撤深度、7 日价格冲击分位、成交量异常、市场情绪。分数只触发研究，不是买入信号。</div></div>
+
+    <div class="dsec"><h4>行情快照</h4><div class="kv">
+      <div class="r"><span>较一年高点</span><span>${a.dd_from_high}%</span></div>
+      <div class="r"><span>较一年低点</span><span>+${a.up_from_low}%</span></div>
+      <div class="r"><span>一年区间位置</span><span>${a.range_pos}%</span></div>
+      <div class="r"><span>30 日 / 90 日</span><span>${sign(a.ret_30d)}${a.ret_30d}% / ${a.ret_90d==null?'—':sign(a.ret_90d)+a.ret_90d+'%'}</span></div>
+      <div class="r"><span>vs 200 日均线</span><span>${a.vs_ma200==null?'—':(sign(a.vs_ma200)+a.vs_ma200+'%')}</span></div>
+      <div class="r"><span>RSI(14)</span><span>${a.rsi14==null?'—':a.rsi14}</span></div>
+      <div class="r"><span>30 日年化波动</span><span>${a.rvol30}%</span></div>
+      <div class="r"><span>一年最大回撤</span><span>${a.mdd_1y}%</span></div>
+      <div class="r"><span>一年高 / 低</span><span>${fmtNum(a.high_1y)} / ${fmtNum(a.low_1y)}</span></div>
+      <div class="r"><span>数据窗口</span><span>${a.bars} 根 · ${a.first_bar}起</span></div>
+    </div></div>
+
+    <div class="dsec"><h4>历史检验（同口径回测 · 非承诺）</h4>
+      <div style="font-size:13px;color:var(--ink2)">回测 ${bt.days} 天：分数≥60 共 ${bt.days_ge60} 天，≥40 共 ${bt.days_ge40} 天，历史最高 ${bt.score_max}。<br>${fwdTxt}。</div>
+      <div style="font-size:11.5px;color:var(--ink3);margin-top:6px">样本量小、阈值未经充分历史检验，仅作观察提醒，不构成目标价或概率。</div></div>
+
+    <div class="dsec rc"><h4>研究卡 · 质量 / 估值 / 催化</h4>
+      <p><b>质量：</b>${r.quality||'—'}</p>
+      <p><b>估值：</b>${r.valuation||'—'}</p>
+      <p><b>催化：</b>${r.catalyst||'—'}</p>
+    </div>
+    <div class="dsec rc"><h4>最强反方理由</h4>
+      <div class="callout"><div class="h">⚑ 为什么可能看错</div>${r.bear_case||'—'}</div>
+    </div>
+    <div class="dsec rc"><h4>上涨空间 / 下行风险 / 等待 / 波动</h4>
+      <p><b>上涨空间：</b>${r.upside||'—'}</p>
+      <p><b>下行风险：</b>${r.downside||'—'}</p>
+      <p><b>等待时间：</b>${r.wait||'—'}</p>
+      <p><b>波动性：</b>30 日年化 ${a.rvol30}%（真实计算）。</p>
+    </div>
+    <div class="dsec"><h4>数据来源与时间</h4><div style="font-size:12px;color:var(--ink2)">
+      行情：${a.source}<br>
+      情绪：${a.kind==='crypto'?'Alternative.me F&G = '+a.sentiment:'CBOE VIX = '+a.sentiment}<br>
+      读取时间：${a.market_time?a.market_time:('实时/最新完整日 '+a.last_bar)}<br>
+      研究卡复核日期：${(RES._meta&&RES._meta.reviewed)||'—'}
+    </div></div>
+  </div>`;
+  $('#drawerBg').classList.add('on'); $('#drawer').classList.add('on');
+}
+function closeDrawer(){ $('#drawerBg').classList.remove('on'); $('#drawer').classList.remove('on'); }
+$('#drawerBg').onclick=closeDrawer;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+
+function renderVerdict(){
+  const T=CFG.scoring.research_trigger;
+  const clean=[], flagged=[];
+  Object.keys(DATA.assets).forEach(s=>{ const a=DATA.assets[s]; if(a.score>=T){ (a.flags&&a.flags.length?flagged:clean).push(s); }});
+  clean.sort((a,b)=>DATA.assets[b].score-DATA.assets[a].score);
+  const watchList=Object.keys(DATA.assets).filter(s=>{const v=DATA.assets[s].score;return v>=CFG.scoring.attention&&v<T;});
+  const nm=s=>s.replace('_USDT','');
+  if(clean.length){
+    $('#verdictH').textContent=`有 ${clean.length} 个资产达到研究阈值，仍需基本面核查`;
+    $('#verdictP').innerHTML=`达到恐慌研究阈值（≥${T}）：<b>${clean.map(nm).join('、')}</b>。恐慌分数只触发研究——买入还需通过资产筛选、基本面核查与风险预算（${CFG.risk_profile.name}，单资产≤${CFG.risk_profile.max_single_position_pct}%）。逐一点开研究卡看最强反方理由。`
+      +(flagged.length?`<br><span style="color:var(--amber)">⚑ ${flagged.map(nm).join('、')} 分数也≥${T}，但因薄流动性等数据问题，仅作观察提醒、不计入触发。</span>`:'');
+  }else{
+    $('#verdictH').textContent='今天不用急着抄底';
+    $('#verdictP').innerHTML=`当前没有资产在可靠信号下达到研究阈值。`
+      +(flagged.length?`<span style="color:var(--amber)">（${flagged.map(nm).join('、')} 名义分数≥${T}，但受薄流动性等数据问题影响，只作观察提醒。）</span>`:'')
+      +`${watchList.length?`接近观察区（分数 ${CFG.scoring.attention}–${T-1}）：<b>${watchList.map(nm).join('、')}</b>。`:''}下面按恐慌分数排序，直接告诉你该等什么。`;
+  }
+}
+
+function renderMethod(){
+  const sc=CFG.scoring;
+  const items=[
+    `恐慌分数 = 回撤(25) + 7日价格冲击分位(25) + 成交量异常(25) + 情绪(25)，满分 100。<b>只触发进一步研究，不是买入信号。</b>`,
+    `回撤起算 ${sc.drawdown.start*100}%，加密满分 ${sc.drawdown.full_crypto*100}% / 美股满分 ${sc.drawdown.full_stock*100}%。`,
+    `情绪：加密用恐惧贪婪（${sc.sentiment.crypto.full}=满分,${sc.sentiment.crypto.zero}=0）；美股用 VIX（${sc.sentiment.stock.zero}=0,${sc.sentiment.stock.full}=满分）。`,
+    `研究阈值 ≥${sc.research_trigger}，关注区 ≥${sc.attention}。<b>阈值未经充分历史检验，只作观察提醒。</b>`,
+    `下一步观察价：${sc.obs_price} 仅为重新评估的观察位，<b>不是目标价</b>。`,
+    `买入还需符合资产筛选与风险预算（${CFG.risk_profile.name}）：单资产≤${CFG.risk_profile.max_single_position_pct}%、加密总仓≤${CFG.risk_profile.max_crypto_total_pct}%、单次分批≤${CFG.risk_profile.max_single_tranche_pct}%。`,
+    `明显下跌时先核查：是短期冲击还是基本面恶化——研究卡的"最强反方理由"即为此设。`,
+  ];
+  $('#methodList').innerHTML=items.map(t=>`<li>${t}</li>`).join('');
+  const miss=DATA.missing||[];
+  $('#missingBox').innerHTML=`<div style="margin-top:12px;font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--ink3)">数据缺失与限制</div><ul>${miss.map(m=>`<li>${m}</li>`).join('')}</ul>`;
+  $('#disc').innerHTML=`⚠ 本页为研究初筛，非投资建议，也不是持续安全监控。没有依据的目标价与概率一律不编；恐慌分数只触发研究。买卖决定与风险自负。`;
+}
+
+function stamp(){
+  const dt=new Date(DATA.fetched_at);
+  const bj=new Date(dt.getTime()+8*3600e3);
+  $('#scanTime').textContent='最近扫描 '+bj.toISOString().slice(5,16).replace('T',' ')+' · 北京时间';
+  const errs=(DATA.errors||[]).length;
+  $('#dataFreshness').textContent=`加密实时 · 美股每周更新（GitHub Actions）${errs?' · '+errs+' 项抓取告警':''}`;
+  $('#cfgVer').textContent=CFG.scoring.version.split(' ')[0];
+  $('#footVer').textContent=`${CFG.scoring.version} · 数据快照 ${DATA.fetched_at.slice(0,10)}`;
+}
+
+// ---- live refresh for crypto (browser can reach Gate + Alt.me) ----
+async function refreshCrypto(){
+  const btn=$('#refreshBtn'); btn.textContent='刷新中…'; btn.disabled=true;
+  try{
+    const fng=await fetch('https://api.alternative.me/fng/?limit=1').then(r=>r.json()).then(j=>+j.data[0].value).catch(()=>null);
+    for(const pair of CFG.watchlist.crypto){
+      const j=await fetch(`https://api.gateio.ws/api/v4/spot/tickers?currency_pair=${pair}`).then(r=>r.json()).catch(()=>null);
+      if(j&&j[0]&&DATA.assets[pair]){
+        const last=+j[0].last, cp=+j[0].change_percentage;
+        const a=DATA.assets[pair];
+        a.price=+last.toPrecision(6);
+        if(!isNaN(cp))a.ret_1d=Math.round(cp*10)/10;
+        // recompute drawdown gap vs stored high & obs
+        a.dd_from_high=Math.round((a.price/a.high_1y-1)*1000)/10;
+        a.obs_gap=Math.round((a.obs_price/a.price-1)*1000)/10;
+      }
+    }
+    if(fng!=null){ DATA.fng.value=fng; DATA.fng.date=new Date().toISOString().slice(0,10)+' (实时)'; }
+    DATA.fetched_at=new Date().toISOString();
+    renderAll();
+    btn.textContent='✓ 已刷新加密实时价';
+  }catch(e){ btn.textContent='刷新失败，用快照数据'; }
+  setTimeout(()=>{btn.textContent='↻ 刷新加密实时价';btn.disabled=false;},2500);
+}
+
+function renderAll(){ renderVerdict(); renderMarket(); renderRows(); renderSectors(); renderMethod(); stamp(); }
+
+$('#tabs').addEventListener('click',e=>{
+  const t=e.target.closest('.tab'); if(!t)return;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on'); FILTER=t.dataset.f; renderRows();
+});
+$('#refreshBtn').onclick=refreshCrypto;
+
+async function boot(){
+  try{
+    try{
+      [CFG,DATA,RES]=await Promise.all([
+        fetch('config.json').then(r=>r.json()),
+        fetch('data/latest.json').then(r=>r.json()),
+        fetch('research/assets.json').then(r=>r.json()),
+      ]);
+    }catch(_){
+      const e=JSON.parse(document.getElementById('__embed').textContent);
+      CFG=e.config; DATA=e.data; RES=e.research;
+    }
+    renderAll();
+    refreshCrypto();
+  }catch(e){
+    $('#verdictH').textContent='数据加载失败';
+    $('#verdictP').textContent='请通过本地服务器或 GitHub Pages 打开（直接双击文件会因浏览器安全策略无法读取 JSON）。错误：'+e.message;
+  }
+}
+boot();
+</script>
+</body>
+</html>
