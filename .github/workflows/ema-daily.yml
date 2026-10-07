@@ -1,0 +1,35 @@
+name: Daily EMA radar refresh
+
+on:
+  schedule:
+    # 北京时间每天 09:15：UTC 加密日线与前一美股交易日均已收盘。
+    - cron: "15 1 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  # 与原周级任务串行写入，避免两个自动提交同时推送导致冲突。
+  group: weekly-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Refresh confirmed daily EMA signals
+        run: python scripts/compute_ema.py
+      - name: Commit EMA snapshot
+        run: |
+          git config user.name "rich-radar-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/ema.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(data): daily EMA radar refresh $(date -u +%Y-%m-%d)"
+            git push
+          fi

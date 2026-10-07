@@ -54,6 +54,12 @@
     "obs_price": "min(近 60 日最低收盘 × 0.97, 近一年最高收盘 × (1 − 40% 加密 / 25% 美股))；仅为重新评估的观察位，不是目标价。",
     "thin_liquidity_quote_volume_usdt": 20000000
   },
+  "ema_radar": {
+    "crypto": ["BTC_USDT", "SOL_USDT", "LINK_USDT", "AAVE_USDT", "NEAR_USDT", "ZEC_USDT", "UNI_USDT"],
+    "stocks": ["CRCL"],
+    "history_bars": 1000,
+    "note": "仅用已收盘日 K；EMA 以首 N 根收盘均价初始化。加密按自然日，美股按交易日计连续根数；历史内未见上穿时标注至少。"
+  },
   "watchlist": {
     "crypto": ["BTC_USDT", "ETH_USDT", "SOL_USDT", "BNB_USDT", "LINK_USDT", "AAVE_USDT", "HYPE_USDT"],
     "stocks": ["CRCL", "NVDA", "GOOGL", "AAPL", "MSFT", "TSLA", "AMZN", "META", "NBIS"],
