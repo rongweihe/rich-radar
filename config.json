@@ -60,6 +60,17 @@
     "history_bars": 1000,
     "note": "仅用已收盘日 K；EMA 以首 N 根收盘均价初始化。加密按自然日，美股按交易日计连续根数；历史内未见上穿时标注至少。"
   },
+  "cz_monitor": {
+    "enabled": true,
+    "username": "cz_binance",
+    "refresh_seconds": 60,
+    "stale_minutes": 45,
+    "timeout_seconds": 90,
+    "max_posts": 200,
+    "retain_posts": 300,
+    "retention_days": 90,
+    "alert_max_age_minutes": 60
+  },
   "watchlist": {
     "crypto": ["BTC_USDT", "ETH_USDT", "SOL_USDT", "BNB_USDT", "LINK_USDT", "AAVE_USDT", "HYPE_USDT"],
     "stocks": ["CRCL", "NVDA", "GOOGL", "AAPL", "MSFT", "TSLA", "AMZN", "META", "NBIS"],

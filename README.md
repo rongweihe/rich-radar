@@ -14,6 +14,7 @@
 - **恐慌分数（0–100）** = 回撤(25) + 7 日价格冲击分位(25) + 成交量异常(25) + 情绪(25)。阈值：≥60 触发研究、≥40 关注。
 - **每张研究卡**：质量 / 估值 / 催化 / 最强反方理由 / 上涨空间 / 下行风险 / 等待时间 / 波动性，并标注数据时间、来源与缺失项。
 - **风险预算**：稳健档——单资产 ≤5%、加密总仓 ≤20%、单次分批 ≤1.5%（见 `config.json`，可改）。
+- **CZ 言论雷达**：每 15 分钟尝试采集 `@cz_binance`，识别中英文买入、逆向机会和长期叙述，展示原文、命中依据、发现时间与监控健康状态。免费方案需要自己的 X 登录会话，不能保证实时或零漏报。
 - **加密实时**：网页打开时直接向 Gate.io / Alternative.me 拉最新价与情绪；**美股每周由 GitHub Actions 更新**。
 - **第三层 · 均线指标雷达**：独立跟踪 BTC / SOL / LINK / AAVE / NEAR / ZEC / UNI / CRCL 的 EMA20、EMA200；EMA20 在上方时显示绿色提示、连续持续时间、上穿日期、两线差幅和最近 60 根均线走势。可筛选上方资产，也可单独刷新均线。
 
@@ -26,7 +27,7 @@
 - 每张卡标注最后收盘日与来源。抓取失败保留原快照并显示错误；加密收盘日距今超过 2 日、美股超过 5 日会标注快照较旧，失败或过期的卡片不计入当前有效信号汇总。均线雷达名单不改变原有恐慌评分、分档和研究卡。
 - [Gate API 文档](https://www.gate.com/docs/developers/apiv4/en/)、[EMA 计算说明](https://www.fidelity.com/learning-center/trading-investing/technical-analysis/technical-indicator-guide/ema)、[Circle 投资者关系](https://investor.circle.com/)。
 
-## 数据源（全部免费、无需 API Key）
+## 行情数据源（公开接口，无需 API Key）
 
 | 类型 | 来源 | 说明 |
 |---|---|---|
@@ -39,88 +40,43 @@
 
 ---
 
-## 目录结构
+## CZ 模块与发布流程
 
-```
-rich-radar/
-├── index.html              # 单文件前端（内嵌一份数据作离线兜底）
-├── config.json             # 观察名单、风险预算、评分口径、分档
-├── data/
-│   ├── latest.json         # 最新快照（Actions 每周覆盖）
-│   ├── history.json        # 每次运行的分数/情绪历史（自动追加）
-│   └── ema.json            # 独立均线快照（Actions 每日覆盖）
-├── research/assets.json    # 16 张定性研究卡（人工维护）
-├── scripts/compute.py      # 抓取+计算，生成 data/latest.json
-├── scripts/compute_ema.py  # 已收盘日 K / EMA 计算，生成 data/ema.json
-├── scripts/ema-radar.js    # 浏览器均线计算、卡片渲染与独立刷新
-├── tests/test_ema.py       # EMA 边界和 Python / JS 一致性验证
-├── .github/workflows/weekly.yml  # 每周一 09:00(北京) 自动刷新
-├── .github/workflows/ema-daily.yml # 每天 09:15(北京) 自动刷新均线
-└── .nojekyll
-```
+`CZRadar` 独立读取 `data/cz.json`，不参与恐慌评分。后台使用固定版本的 twscrape 和可选 RSS，前端只读取公开快照，不持有登录凭据。
 
----
+| 文件 | 职责 |
+|---|---|
+| `scripts/cz_sources.py` | X / RSS 适配、作者校验、限时采集 |
+| `scripts/cz_rules.py` | 可解释的中英文规则及反例排除 |
+| `scripts/compute_cz.py` | 去重、编辑修订、覆盖检查、退避、保留历史 |
+| `scripts/cz-radar.js` / `styles/cz-radar.css` | 独立卡片、筛选、健康状态、页面内新信号提示 |
+| `scripts/refresh.py` | CZ / 每日 EMA / 每周市场数据的单写者调度 |
+| `data/refresh-state.json` | 记录完成周期，延迟调度可补跑 |
+| `scripts/build_site.py` / `scripts/verify_site.py` | 静态文件白名单打包、部署后验证线上哈希 |
+| `.github/workflows/radar.yml` | 唯一的刷新和 Pages 发布工作流 |
 
-## 部署到 GitHub Pages（逐步）
+**部署按 [DEPLOYMENT.md](DEPLOYMENT.md) 操作**。Pages Source 必须选择 **GitHub Actions**；旧的每周/每日工作流已合并，不能继续照旧选择分支发布。推送代码只部署现有快照；首次运行选择 `all`，以后定时 `auto`。
 
-> 我（Claude）无法替你登录 GitHub 或创建仓库（涉及账号凭证），请你自己执行下面命令。仓库名用 `rich-radar` 时，地址即 `https://rongweihe.github.io/rich-radar/`。
+实现边界与开源选型见 [docs/CZ_MONITOR.md](docs/CZ_MONITOR.md)，依赖来源与许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
-**1) 在 GitHub 网站上新建一个空仓库** `rich-radar`（不要勾选 README/License）。
+## 本地预览与验证
 
-**2) 在本机把本文件夹推上去**（在 `rich-radar/` 目录内执行）：
+需要 Python 3.12 和 Node.js 22+：
 
 ```bash
-cd rich-radar
-git init
-git add .
-git commit -m "init: RICH 带血筹码雷达"
-git branch -M main
-git remote add origin https://github.com/rongweihe/rich-radar.git
-git push -u origin main
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements-cz.txt -c requirements-cz.lock
+.venv/bin/python -m unittest discover -s tests -v
+node --test tests/test_cz_frontend.cjs
+.venv/bin/python scripts/build_site.py
+.venv/bin/python -m http.server 8000 --bind 127.0.0.1 --directory _site
 ```
 
-**3) 开启 Pages**：仓库 → Settings → Pages → Build and deployment →
-Source 选 **Deploy from a branch**，Branch 选 **main / (root)**，Save。
-约 1 分钟后访问 `https://rongweihe.github.io/rich-radar/`。
+打开 `http://127.0.0.1:8000/`。`_site` 只包含可公开的静态文件。每次修改后重新构建再刷新浏览器。直接双击 HTML 只能看到内嵌行情兜底，CZ 在线快照需要 HTTP 服务。
 
-**4) 开启每周自动更新**：仓库 → Settings → Actions → General →
-Workflow permissions 选 **Read and write permissions**，Save。
-然后 Actions 标签页 → 选 “Weekly data refresh” → **Run workflow** 手动跑一次验证；之后每周一 09:00（北京时间）自动刷新美股数据并提交。
-均线快照通过 “Daily EMA radar refresh” 每天 09:15（北京时间）单独更新；也可手动运行。两项任务使用同一并发组，避免同时提交产生推送冲突。
+手动更新使用 `.venv/bin/python scripts/refresh.py --scope all`；可选 `cz`、`market`、`ema`。`auto` 根据已完成周期补跑；`publish` 不采集。CZ 未设置环境变量时正常显示「未配置」，不会写入演示推文。配置凭据方法见部署文档，不要把会话写入仓库。
 
-> 想改频率：编辑 `.github/workflows/weekly.yml` 里的 `cron`。
-> `0 1 * * 1` = 每周一 01:00 UTC = 北京时间周一 09:00。
-
----
-
-## 本地预览
-
-`index.html` 内嵌了一份数据兜底，**直接双击即可打开**看到完整页面；加密实时价会尝试联网刷新。
-若想让它读取 `data/latest.json` 最新文件（而非内嵌兜底），用本地服务器打开：
-
-```bash
-cd rich-radar
-python3 -m http.server 8000
-# 浏览器打开 http://localhost:8000/
-```
-
-## 手动更新数据
-
-```bash
-cd rich-radar
-python3 scripts/compute.py      # 需要能联网（Actions 环境即可）
-# 会覆盖 data/latest.json 并追加 data/history.json
-python3 scripts/compute_ema.py  # 单独更新 data/ema.json，不依赖情绪指数
-```
-
-验证均线算法（Python 3.9+，跨端一致性测试需 Node.js）：
-
-```bash
-python3 -m unittest discover -s tests -v
-node --check scripts/ema-radar.js
-```
-
-页面内嵌一份均线快照供离线兜底；在线始终优先读取 `data/ema.json`。自动更新只写快照文件，直接双击离线展示的内嵌快照可能较旧，卡片会显示实际收盘日期。
+页面显示的加密实时价格与每周评分快照分别计时，价格刷新不会重算恐慌评分；失败不推进价格时间。均线仅使用已收盘日 K，实际收盘日期见卡片。
 
 ## 维护研究卡
 

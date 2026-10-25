@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "snapshot_id": "unconfigured",
+  "username": "cz_binance",
+  "generated_at": null,
+  "last_success_at": null,
+  "status": "unconfigured",
+  "rule_version": "cz-rules-v1",
+  "sources": {},
+  "posts": []
+}

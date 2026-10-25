@@ -1,0 +1,90 @@
+name: Radar refresh and Pages deploy
+
+on:
+  schedule:
+    # Avoid the hourly peak. Best effort; GitHub does not guarantee 15-minute delivery.
+    - cron: '2,17,32,47 * * * *'
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: 'auto 按周期补更新；all 全量；publish 仅部署'
+        type: choice
+        default: auto
+        options: [auto, all, cz, market, ema, publish]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# One writer and publisher. Pending runs may be coalesced; auto uses persisted due
+# slots so a replaced run does not silently discard a daily/weekly update.
+concurrency:
+  group: radar-writer-publisher
+  cancel-in-progress: false
+
+jobs:
+  refresh-deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install collectors
+        id: dependencies
+        continue-on-error: true
+        run: python -m pip install -r requirements-cz.txt -c requirements-cz.lock
+      - name: Test deterministic behavior
+        run: |
+          python -m unittest discover -s tests -v
+          node --test tests/test_cz_frontend.cjs
+          node --check scripts/cz-radar.js
+          node --check scripts/ema-radar.js
+      - name: Refresh snapshots (failures remain visible)
+        env:
+          CZ_X_COOKIES: ${{ secrets.CZ_X_COOKIES }}
+          CZ_RSS_URL: ${{ secrets.CZ_RSS_URL }}
+          EVENT_NAME: ${{ github.event_name }}
+          REQUESTED_SCOPE: ${{ inputs.scope }}
+        run: |
+          if [ "$EVENT_NAME" = "push" ]; then
+            python scripts/refresh.py --scope publish
+          else
+            python scripts/refresh.py --scope "${REQUESTED_SCOPE:-auto}"
+          fi
+      - name: Commit public snapshots only
+        run: |
+          git config user.name rich-radar-bot
+          git config user.email actions@users.noreply.github.com
+          git add data/latest.json data/history.json data/ema.json data/cz.json data/refresh-state.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(data): refresh radar snapshots"
+            git push origin HEAD:main
+          fi
+      - name: Build public allowlist
+        run: python scripts/build_site.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Deploy Pages explicitly
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify live content
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: python scripts/verify_site.py "$PAGE_URL"
