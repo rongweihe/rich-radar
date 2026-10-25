@@ -1,11 +1,20 @@
 {
   "schema_version": 1,
-  "snapshot_id": "unconfigured",
   "username": "cz_binance",
-  "generated_at": null,
+  "generated_at": "2026-10-25T08:58:51.908803+00:00",
   "last_success_at": null,
   "status": "unconfigured",
   "rule_version": "cz-rules-v1",
-  "sources": {},
-  "posts": []
+  "sources": {
+    "twscrape": {
+      "status": "unconfigured",
+      "code": "unconfigured"
+    },
+    "rss": {
+      "status": "unconfigured",
+      "code": "unconfigured"
+    }
+  },
+  "posts": [],
+  "snapshot_id": "da69ee03e9422bdce5e8"
 }
