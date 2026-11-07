@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "username": "cz_binance",
-  "generated_at": "2026-11-07T16:27:35.082610+00:00",
+  "generated_at": "2026-11-07T20:25:15.438300+00:00",
   "last_success_at": null,
   "status": "unconfigured",
   "rule_version": "cz-rules-v1",
@@ -16,5 +16,5 @@
     }
   },
   "posts": [],
-  "snapshot_id": "8f63e88d413514b1f98d"
+  "snapshot_id": "2d900621c6014a738b4e"
 }
